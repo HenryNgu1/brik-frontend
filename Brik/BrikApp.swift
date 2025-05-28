@@ -9,9 +9,30 @@ import SwiftUI
 
 @main
 struct BrikApp: App {
+    
+    // 1. Track whether the splashScreen is showing
+    @State private var isSplashScreenShowing = true
+        
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            Group {
+                
+                // 2. Conditional statement to show which screen to show on start
+                
+                if isSplashScreenShowing {
+                    SplashView() // 2.2 Show Splash Screen
+                }
+                else {
+                    ContentView() // 2.3 Show other screen
+                }
+            }.onAppear() { // 3. After 2 seconds, hide splash screen with fade animation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    withAnimation(.easeOut(duration: 0.5)) {
+                        isSplashScreenShowing = false
+                    }
+                }
+            }
         }
     }
 }
+
