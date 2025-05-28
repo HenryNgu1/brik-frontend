@@ -23,7 +23,7 @@ struct BrikApp: App {
                     SplashView() // 2.2 Show Splash Screen
                 }
                 else {
-                    ContentView() // 2.3 Show other screen
+                    LoginView() // 2.3 Show login screen
                 }
             }.onAppear() { // 3. After 2 seconds, hide splash screen with fade animation
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
