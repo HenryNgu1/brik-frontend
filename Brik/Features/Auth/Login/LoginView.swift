@@ -9,7 +9,7 @@ import SwiftUI
 
 struct LoginView : View {
     
-    // 0. Manage viewModel
+    // 0. Track viewModel
     @StateObject private var viewModel = LoginViewModel();
 
     var body : some View {
@@ -53,13 +53,27 @@ struct LoginView : View {
                             .cornerRadius(8) // Round corners
                             .padding(.horizontal, 16) // Add horizontal padding
                         
-                        // 3.2. Password section
+                        // 3.2 Inline email validation prompt
+                        if !viewModel.email.isEmpty && !EmailValidator.isValid(viewModel.email) {
+                            Text("Enter valid email")
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                        
+                        // 3.3. Password section
                         SecureField("Password", text: $viewModel.password)
                             .textContentType(.password)
                             .padding( )
                             .background(Color(.secondarySystemBackground))
                             .cornerRadius(8)
                             .padding(.horizontal, 16)
+                        
+                        // 3.4 Inline password validation prompt
+                        if !viewModel.password.isEmpty && viewModel.password.count <= 8 {
+                            Text("Password must be longer than 8 characters")
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
                         
                         // 4. Submit button
                         Button(action: {

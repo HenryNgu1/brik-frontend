@@ -25,6 +25,12 @@ final class SignUpViewModel : ObservableObject {
     @Published var dateOfBirth : Date = Date()
     // 2. Error for alerts
     @Published var error: SignUpError?
+    
+    // 3. Users age
+    var age: Int {
+        // 3.1. Use extended Date years function in Shared/Extensions/DateToAge to get age from birthdate
+        dateOfBirth.years()
+    }
 
     
     // 3.1 Computed variable returns true or false if form inputs are valid
@@ -34,15 +40,12 @@ final class SignUpViewModel : ObservableObject {
         password == confirmPassword && // Check is password entered is the same from computed
         gender != "" && // Check gender is not empty
         location != "" && // Check Location is not empty
-        bio != "" // Check is bio is not empty
+        bio != "" &&// Check is bio is not empty
+        age >= 18 // check user is 18 +
     }
     
     // 4. TODO: IMPLEMENT SIGNUP
     func signUp() {
         
-        if password != confirmPassword {
-            error = .init(errorMessage: "Passwords do not match")
-            return
-        }
     }
 }

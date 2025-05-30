@@ -24,7 +24,7 @@ final class LoginViewModel : ObservableObject {
     var canSubmit: Bool {
         
         // 2.1 check email is valid using helper function from "EmailValidator"
-        EmailValidator.isValid(email) && email.count > 6
+        EmailValidator.isValid(email) && password.count > 8
         }
 
     // 3. TODO: Login implementation
