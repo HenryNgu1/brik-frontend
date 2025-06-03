@@ -10,115 +10,154 @@ import SwiftUI
 
 struct SignUpView: View {
     
-    // 0. viewModel
+    // SET UP
     @StateObject var viewModel = SignUpViewModel()
     @StateObject private var autocomplete = SuburbAutoCompleteService()
-    // 0.1 state variables
-    @State private var genderTouched = false
-    @State private var locationTouched = false
-    @State private var bioTouched = false
-    @State private var nameTouched = false
     @State private var didAttemptSubmit = false
     
     
+    // VIEW CONTENT
     var body: some View {
-        // 1. Z stack allows layered content
+        
+        // 1. Parent layered stack, set bg color + fill entire screen
         ZStack{
-            // 1.1 Set background color
             Color("SplashBackground")
-                .ignoresSafeArea() // Fill entire screen
+                .ignoresSafeArea()
             
-            ScrollView(.vertical, showsIndicators: true) { // Allow contents to be scrollable
+            // 2. Allow contents to be scrollable
+            ScrollView(.vertical, showsIndicators: true) {
                 
-                // 2. Stack contents vertically and align centre
+                // 3. Center and stack contents vertically
                 VStack(spacing: 16){
                     
-                    // 3. Image
+                    // 3.1. Image
                     Image("AppLogo")
-                        .resizable() // Allow for resizing of image
-                        .frame(width: 90, height: 90) // Image size
-                        .padding() // auto padding
+                        .resizable()
+                        .frame(width: 90, height: 90)
+                        .padding()
                     
-                    // 2.3 Log in text
+                    // 3.2. Log in text
                     Text("Create an account to continue")
-                        .font(.subheadline) // Set font size
-                        .foregroundColor(.secondary) // Set font color
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                         .padding(.bottom, 16)
                     
+                    // 4. Form contents
                     Group {
-                        // 3. Name input field
+                        
+                        // 5. Name input field
                         TextField("Name", text: $viewModel.name)
                             .textContentType(.name)
                             .padding( )
                             .background(Color(.secondarySystemBackground))
                             .cornerRadius(8)
-                        
-                        // 3.1 Inline name validation message
-                        if viewModel.name.isEmpty && nameTouched {
-                            Text("Please enter a name")
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(viewModel.nameErrorMessage == nil
+                                            ? Color.gray.opacity(0.5)
+                                            : Color.red,
+                                            lineWidth: 1)
+                            )
+
+                        // 5.1 Name validation message
+                        if let error: String = viewModel.nameErrorMessage {
+                            Text(error)
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
                         
-                        // 4. Email text field
+                        // 6. Email text field
                         TextField("Email", text: $viewModel.email)
-                            .keyboardType(.emailAddress) // text swift this is an email address
-                            .textContentType(.emailAddress) // allows for access to stored emails
-                            .autocapitalization(.none) // stops first letter being capitalized
+                            .keyboardType(.emailAddress) // Text swift this is an email address
+                            .textContentType(.emailAddress) // Allows for access to stored emails
+                            .autocapitalization(.none) // Stops first letter being capitalized
                             .padding() //padding
                             .background(Color(.secondarySystemBackground)) // color
                             .cornerRadius(8) //rounded corners
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(viewModel.emailErrorMessage == nil
+                                            ? Color.gray.opacity(0.5)
+                                            : Color.red,
+                                            lineWidth: 1)
+                            )
                         
-                        // 4.1 Inline email validation
-                        if !viewModel.email.isEmpty && !EmailValidator.isValid(viewModel.email){
-                            Text("Please enter valid email")
+                        // 6.1 Email validation message
+                        if let error: String = viewModel.emailErrorMessage{
+                            Text(error)
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
                         
-                        // 5. Password TextField
+                        // 7. Password TextField
                         SecureField("Password", text: $viewModel.password)
                             .textContentType(.newPassword) // Enables password autofill
                             .padding( ) // Padding
                             .background(Color(.secondarySystemBackground)) // Background color
                             .cornerRadius(8) // Rounded corners
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(viewModel.passwordErrorMessage == nil
+                                            ? Color.gray.opacity(0.5)
+                                            : Color.red,
+                                            lineWidth: 1)
+                            )
                         
-                        // 5.1 Inline password validation
-                        if !viewModel.password.isEmpty && viewModel.password.count < 8 {
-                            Text("Password must be at least 8 characters long")
+                        
+                        // 7.1 PW validation message
+                        if let error: String = viewModel.passwordErrorMessage {
+                            Text(error)
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
                         
-                        // 6. Confirm Password input
+                        // 8. Confirm Password input
                         SecureField("Confirm Password", text: $viewModel.confirmPassword)
                             .textContentType(.newPassword)
                             .autocapitalization(.none)
                             .padding( )
                             .background(Color(.secondarySystemBackground))
                             .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(viewModel.confirmPasswordErrorMessage == nil
+                                            ? Color.gray.opacity(0.5)
+                                            : Color.red,
+                                            lineWidth: 1)
+                            )
                         
-                        // 6.1 Validation message for confirm pw
-                        if didAttemptSubmit && viewModel.password != viewModel.confirmPassword {
-                            Text("Passwords do not match")
+                        // 8.1 Confirm PW validation message
+                        if let error: String = viewModel.confirmPasswordErrorMessage {
+                            Text(error)
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
                         
-                        // 7. Date picker
+                        // 9. Date picker
                         DatePicker("Date of Birth", selection: $viewModel.dateOfBirth, in: ...Date(), displayedComponents: .date)
                             .datePickerStyle(.compact) // compact style fits form
                             .padding() // Padding
                             .background(Color(.secondarySystemBackground)) // Color
                             .cornerRadius(8) // Rounded corners
+                            .onChange(of: viewModel.dateOfBirth) {
+                                print("New DOB:", viewModel.dateOfBirth, "→ age:", viewModel.age)
+                            }
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(viewModel.dateOfBirthErrorMessage == nil
+                                            ? Color.gray.opacity(0.5)
+                                            : Color.red,
+                                            lineWidth: 1)
+                            )
                         
-                        if didAttemptSubmit && viewModel.age < 18 {
-                            Text("Must be 18 or older")
+                        // 9.1 DOB validation message
+                        if let error: String = viewModel.dateOfBirthErrorMessage {
+                            Text(error)
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
                         
-                        // 8. Gender option
+                        // 10. Gender option
                         Picker("Gender", selection: $viewModel.gender) {
                             Text("Male").tag("Male")
                             Text("Female").tag("Female")
@@ -127,37 +166,45 @@ struct SignUpView: View {
                         .pickerStyle(.segmented) // Style
                         .background(Color(.secondarySystemBackground)) // Color
                         .cornerRadius(8) // Rounded corners
-                        .onChange(of: viewModel.gender) {
-                            genderTouched = true
-                        }
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(viewModel.genderErrorMessage == nil
+                                        ? Color.gray.opacity(0.5)
+                                        : Color.red,
+                                        lineWidth: 1)
+                        )
                         
-                        // 8.1 Gender validation message
-                        if viewModel.gender.isEmpty && genderTouched {
-                            Text("Gender is required")
-                                .foregroundColor(.red)
+                        // 10.1 Gender validation message
+                        if let error: String = viewModel.genderErrorMessage {
+                            Text(error)
                                 .font(.caption)
+                                .foregroundColor(.red)
                         }
                         
-                        // 9. Suburb input field
+                        // 11. Location input field
                         TextField("Suburb", text: $viewModel.location)
                             .padding()
                             .background(Color(.secondarySystemBackground))
                             .cornerRadius(8)
                             .onChange(of: viewModel.location) {
-                                locationTouched = true
                                 autocomplete.update(query: viewModel.location)
                             }
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(viewModel.locationErrorMessage == nil
+                                            ? Color.gray.opacity(0.5)
+                                            : Color.red,
+                                            lineWidth: 1)
+                            )
                         
-                        // 9.1 Location validation
-                        if locationTouched && !viewModel.location.isEmpty {
-                            if autocomplete.suggestions.isEmpty {
-                                Text("Please select a suburb from the list")
-                                    .font(.caption)
-                                    .foregroundColor(.red)
-                            }
+                        // 11.1 Location validation message
+                        if let error: String = viewModel.locationErrorMessage {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
                         }
                         
-                        // 9.2. Auto suggestions in a scrollable list
+                        // 11.2. Auto suggestions in a scrollable list
                         if !autocomplete.suggestions.isEmpty {
                             ScrollView {
                                 VStack(alignment: .leading, spacing: 0) {
@@ -166,7 +213,7 @@ struct SignUpView: View {
                                             .padding(8)
                                             .onTapGesture {
                                                 
-                                                // 9.3. Set the location and clear suggestions
+                                                // 11.3. Set the location and clear suggestions
                                                 viewModel.location = suburb
                                                 autocomplete.suggestions = []
                                             }
@@ -180,57 +227,66 @@ struct SignUpView: View {
                             .frame(maxHeight: 150)
                             .background(Color(.secondarySystemBackground))
                             .cornerRadius(8)
+                            
                         }
                                         
-                        // 10. Bio input area
                         VStack {
-                            // 10.1 Static user prompt
+                            // 12. Bio input area
                             Text("Tell us about yourself…")
                                 .foregroundColor(.secondary) // color
                                 .padding(.horizontal, 8) // left/right padding
                                 .padding(.top, 12) // top padding
                             
-                            // 10.2 user input
+                            // 12.1 Input box
                             TextEditor(text: $viewModel.bio)
                                 .frame(minHeight: 90) // ensure tappable area
                                 .padding(4) // padding
                                 .cornerRadius(8) // rounded corners
-                                .onChange(of: viewModel.bio){
-                                    bioTouched = true
-                                }
-                            
-                            if bioTouched && viewModel.bio.isEmpty{
-                                Text("Bio is required")
-                                    .foregroundColor(.red)
-                                    .font(.caption)
-                            }
+                                
                         }
                         .background(Color(.secondarySystemBackground)) // color for bio area
                         .cornerRadius(8) // rounded corners
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(viewModel.bioErrorMessage == nil
+                                        ? Color.gray.opacity(0.5)
+                                        : Color.red,
+                                        lineWidth: 1)
+                                       
+                        )
                         
-                        // 11. Submit button
+                        // 12.2 Bio validation message
+                        if let error: String = viewModel.bioErrorMessage {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                        
+                        // 13. Submit button
                         Button(action: {
-                            didAttemptSubmit = true
-                            // 11.1 Call signup function to attempt to sign up from SignUpViewModel
-                            viewModel.signUp()
+                            viewModel.validateFields()
+                            Task {
+                                await viewModel.signUp()
+                            }
                         }) {
-                            Text("Sign Up")
+                            Text("Create Account")
                                 .font(.headline) // Text font
                                 .foregroundColor(.white) //Text color
                                 .padding() // Auto padding
                                 .background(Color.blue) // Button color
                                 .cornerRadius(8) // Rounded button corners
-                        }.padding(.vertical, 24) // Top button padding
+                        }
+                        .padding(.vertical, 24) // Top button padding
+                            
                     }
                     
-                    // 12. Stack contents horizontally
                     HStack {
-                        // 12.1. Static text if users already have account
+                        // 14. Redirect to login in
                         Text("Already have an account?")
                             .font(.footnote) // font
                             .foregroundColor(.secondary) //font color
                         
-                        // 10.2. Link to go back to log in page
+                        // 14.1. Link to go back to log in page
                         NavigationLink(destination: LoginView()) {
                             Text("Log in")
                                 .font(.footnote) // font
@@ -240,7 +296,7 @@ struct SignUpView: View {
                     }
                     .padding(.bottom, 24) // bottom padding for log in link
                 }
-                .padding(.horizontal, 24) // padding for main vertical stack
+                .padding(.horizontal, 24) // padding for form vertical stack
             }
         }
     }

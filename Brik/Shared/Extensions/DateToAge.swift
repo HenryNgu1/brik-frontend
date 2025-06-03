@@ -17,7 +17,7 @@ extension Date {
     func years(since date: Date = Date(), using calender: Calendar = .current) -> Int {
         
         // 2. Calender computes .year component difference from self(birthdate) to date(now)
-        let components = calender.dateComponents([.year], from: date, to: self)
+        let components = calender.dateComponents([.year], from: self, to: date)
         
         // 3. Return only in full years difference in years, default to 0 if nil
         return components.year ?? 0

@@ -30,7 +30,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		2DC9A5512DE67C6200FE73D4 /* Brik */ = {
+		2D4ED7562DEAC94F0022BBC9 /* Brik */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Brik;
 			sourceTree = "<group>";
@@ -75,7 +75,7 @@
 		2DC9A5462DE67C6100FE73D4 = {
 			isa = PBXGroup;
 			children = (
-				2DC9A5512DE67C6200FE73D4 /* Brik */,
+				2D4ED7562DEAC94F0022BBC9 /* Brik */,
 				2DC9A55F2DE67C6300FE73D4 /* BrikTests */,
 				2DC9A5692DE67C6300FE73D4 /* BrikUITests */,
 				2DC9A5502DE67C6200FE73D4 /* Products */,
@@ -108,7 +108,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				2DC9A5512DE67C6200FE73D4 /* Brik */,
+				2D4ED7562DEAC94F0022BBC9 /* Brik */,
 			);
 			name = Brik;
 			packageProductDependencies = (

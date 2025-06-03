@@ -7,14 +7,15 @@
 
 import Foundation
 
-// 0. Customer Error type
+// 0. CUSTOM SIGN UP ERROR TYPE
 struct SignUpError : Identifiable, LocalizedError {
     let id = UUID()
     let errorMessage: String?
 }
 
 final class SignUpViewModel : ObservableObject {
-    // 1. Form inputs
+
+    // 1. FORM INPUTS
     @Published var email: String = ""
     @Published var password: String = ""
     @Published var confirmPassword: String = ""
@@ -23,29 +24,156 @@ final class SignUpViewModel : ObservableObject {
     @Published var location : String = ""
     @Published var bio : String = ""
     @Published var dateOfBirth : Date = Date()
-    // 2. Error for alerts
-    @Published var error: SignUpError?
     
-    // 3. Users age
+    // 2. UI STATE
+    @Published var isLoading: Bool = false
+    @Published var currentUser: User? = nil
+    
+    // 3. ERROR MESSAGES
+    @Published var errorMessage: String?
+    @Published var emailErrorMessage: String?
+    @Published var passwordErrorMessage: String?
+    @Published var confirmPasswordErrorMessage: String?
+    @Published var nameErrorMessage: String?
+    @Published var genderErrorMessage: String?
+    @Published var locationErrorMessage: String?
+    @Published var bioErrorMessage: String?
+    @Published var dateOfBirthErrorMessage: String?
+    
+    // 4. AGE: computed variable
     var age: Int {
-        // 3.1. Use extended Date years function in Shared/Extensions/DateToAge to get age from birthdate
+        // Use extended Date years function in Shared/Extensions/DateToAge to get age from birthdate
         dateOfBirth.years()
     }
 
-    
-    // 3.1 Computed variable returns true or false if form inputs are valid
+    // 5. CAN SUBMIT: validation computed variable
     var canSubmit : Bool {
-        !name.isEmpty && // Check if name is not empty
-        EmailValidator.isValid(email) && // Check valid email format  from helper function from helpers/emailvalidator
-        password == confirmPassword && // Check is password entered is the same from computed
-        gender != "" && // Check gender is not empty
-        location != "" && // Check Location is not empty
-        bio != "" &&// Check is bio is not empty
-        age >= 18 // check user is 18 +
+        !name.isEmpty && // 1. Check if name is not empty
+        EmailValidator.isValid(email) && // 2. Check valid email format  from helper function from helpers/emailvalidator
+        password == confirmPassword && // 3. Check is password entered is the same from computed
+        !gender.isEmpty && // 4. Check gender is not empty
+        !location.isEmpty && // 5. Check Location is not empty
+        !bio.isEmpty &&// 6. Check is bio is not empty
+        age >= 18 // 7. check user is 18 +
     }
     
-    // 4. TODO: IMPLEMENT SIGNUP
-    func signUp() {
+    // VALIDATION ERROR MESSAGES
+    func validateFields() {
+        // 1. NAME ERROR
+        if name.isEmpty {
+            nameErrorMessage = "Name is required"
+        }
+        else {
+            nameErrorMessage = nil
+        }
+            
+        // 2. EMAIL ERROR
+        if !EmailValidator.isValid(email) {
+            emailErrorMessage = "Please enter a valid email address"
+        }
+        else if email.isEmpty {
+            emailErrorMessage = "Email is required"
+        }
+        else {
+            emailErrorMessage = nil
+        }
+            
+        // 3. PASSWORD ERROR
+        if password.isEmpty {
+            passwordErrorMessage = "Password is required"
+        }
+        else if password.count < 8 {
+            passwordErrorMessage = "Password must be at least 8 characters long"
+        }
+        else {
+            passwordErrorMessage = nil
+        }
+        if confirmPassword.isEmpty {
+            confirmPasswordErrorMessage = "Confirm password is required"
+        }
+        else if password != confirmPassword {
+            confirmPasswordErrorMessage = "Passwords do not match"
+        }
+        else {
+            confirmPasswordErrorMessage = nil
+        }
+            
+        // 4. GENDER ERROR
+        if gender.isEmpty {
+            genderErrorMessage = "Gender is required"
+        }
+        else {
+            genderErrorMessage = nil
+        }
+            
+        // 5. AGE ERROR
+        if age < 18 {
+            dateOfBirthErrorMessage = "You must be 18 years old to sign up"
+        }
+        else {
+            dateOfBirthErrorMessage = nil
+        }
+            
+        // 6. LOCATION ERROR
+        if location.isEmpty {
+            locationErrorMessage = "Location is required"
+        }
+        else {
+            locationErrorMessage = nil
+        }
         
+        // 7. BIO ERROR
+        if bio.isEmpty {
+            bioErrorMessage = "Bio is required"
+        }
+        else {
+            bioErrorMessage = nil
+        }        
+    }
+        
+    // SIGNUP
+    func signUp() async {
+            
+        guard canSubmit else { return }
+            
+        isLoading = true
+            
+        // 2. Build the signUpRequest with published fields
+        let signUpRequest = SignUpRequest(
+            email: email,
+            password: password,
+            name: name,
+            age: age,
+            gender: gender,
+            bio: bio,
+            location: location
+        )
+            
+        do {
+            // 3. Await the network call
+            let response = try await AuthService.shared.signup(request: signUpRequest)
+                
+            // 4. Save JWT in Keychain
+            try KeychainHelper.standard.SaveToken(response.token)
+                
+            // 5. Update the current user
+            currentUser = response.user
+        }
+        catch let authError as AuthError {
+            // 6.1 If auth error occurs, display error
+            errorMessage = authError.localizedDescription
+        }
+        catch let keychainError as KeychainError{
+            // 6.2 If keychain error occurs, display error
+            errorMessage = keychainError.localizedDescription
+        }
+        catch {
+            // 6.3 If any other error occurs, display that error
+            errorMessage = "An unexpected error occurred."
+        }
+            
+        // 7. Stop the loader on the main thread
+        isLoading = false
     }
 }
+
