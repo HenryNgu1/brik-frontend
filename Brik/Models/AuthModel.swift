@@ -20,13 +20,20 @@ struct LoginResponse: Codable {
     let token: String
     let user: User
 }
-
+// 3. USER
+//
 // Model of user
 struct User: Codable {
     let id: Int
     let email: String
     let name: String
     let age: Int
+    let gender: String
+    let bio: String
+    let location: String
+    let profileImage: String?
+    let rating: Int
+    let createdAt: Date
 }
 
 // 2. SIGN UP

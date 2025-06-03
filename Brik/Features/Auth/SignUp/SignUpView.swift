@@ -13,7 +13,7 @@ struct SignUpView: View {
     // SET UP
     @StateObject var viewModel = SignUpViewModel()
     @StateObject private var autocomplete = SuburbAutoCompleteService()
-    @State private var didAttemptSubmit = false
+    @State private var showImagePicker = false
     
     
     // VIEW CONTENT
@@ -23,13 +23,12 @@ struct SignUpView: View {
         ZStack{
             Color("SplashBackground")
                 .ignoresSafeArea()
-            
+
             // 2. Allow contents to be scrollable
             ScrollView(.vertical, showsIndicators: true) {
                 
                 // 3. Center and stack contents vertically
                 VStack(spacing: 16){
-                    
                     // 3.1. Image
                     Image("AppLogo")
                         .resizable()
@@ -44,6 +43,36 @@ struct SignUpView: View {
                     
                     // 4. Form contents
                     Group {
+                        ZStack {
+                            if let image = viewModel.profileImage {
+                                // Show the user’s selected image
+                                Image(uiImage: image)
+                                    .resizable  ()
+                                    .scaledToFill()
+                                    .frame(width: 120, height: 120)
+                                    .clipShape(Circle())
+                                    .overlay(Circle().stroke(Color.gray, lineWidth: 2))
+                            } else {
+                                // Show placeholder circle
+                                
+                                Circle()
+                                .fill(Color(.secondarySystemBackground))
+                                .frame(width: 120, height: 120)
+                                .overlay(
+                                    Text("Upload profile")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                )
+                            }
+                        }
+                        .onTapGesture {
+                        // Present the photo picker
+                        showImagePicker = true
+                        }
+                        .padding(.top, 30)
+                        .sheet(isPresented: $showImagePicker) {
+                            ImagePicker(selectedImage: $viewModel.profileImage)
+                        }
                         
                         // 5. Name input field
                         TextField("Name", text: $viewModel.name)

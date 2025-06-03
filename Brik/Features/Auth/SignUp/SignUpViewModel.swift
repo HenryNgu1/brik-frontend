@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 // 0. CUSTOM SIGN UP ERROR TYPE
 struct SignUpError : Identifiable, LocalizedError {
@@ -24,6 +25,7 @@ final class SignUpViewModel : ObservableObject {
     @Published var location : String = ""
     @Published var bio : String = ""
     @Published var dateOfBirth : Date = Date()
+    @Published var profileImage : UIImage? = nil
     
     // 2. UI STATE
     @Published var isLoading: Bool = false
@@ -57,7 +59,7 @@ final class SignUpViewModel : ObservableObject {
         age >= 18 // 7. check user is 18 +
     }
     
-    // VALIDATION ERROR MESSAGES
+    // VALIDATION ERROR MESSAGES FUNCTION
     func validateFields() {
         // 1. NAME ERROR
         if name.isEmpty {
@@ -131,29 +133,29 @@ final class SignUpViewModel : ObservableObject {
         }        
     }
         
-    // SIGNUP
+    // SIGNUP FUNCTION
     func signUp() async {
-            
+        
+        // 1. Check is all required fields have valid input
         guard canSubmit else { return }
-            
-        isLoading = true
-            
-        // 2. Build the signUpRequest with published fields
-        let signUpRequest = SignUpRequest(
-            email: email,
-            password: password,
-            name: name,
-            age: age,
-            gender: gender,
-            bio: bio,
-            location: location
-        )
+        
+        // 2. Show loader
+        //isLoading = true
             
         do {
-            // 3. Await the network call
-            let response = try await AuthService.shared.signup(request: signUpRequest)
+            // 3. Await the network call and get response back
+            let response = try await AuthService.shared.signup(
+                email: email,
+                password: password,
+                name: name,
+                age: age,
+                gender: gender,
+                bio: bio,
+                location: location,
+                profileImage: profileImage
+            )
                 
-            // 4. Save JWT in Keychain
+            // 4. Save JWT in Keychain from response
             try KeychainHelper.standard.SaveToken(response.token)
                 
             // 5. Update the current user
@@ -161,19 +163,21 @@ final class SignUpViewModel : ObservableObject {
         }
         catch let authError as AuthError {
             // 6.1 If auth error occurs, display error
-            errorMessage = authError.localizedDescription
+            print(authError.localizedDescription)
         }
         catch let keychainError as KeychainError{
             // 6.2 If keychain error occurs, display error
-            errorMessage = keychainError.localizedDescription
+            print(keychainError.localizedDescription)
         }
         catch {
             // 6.3 If any other error occurs, display that error
-            errorMessage = "An unexpected error occurred."
+            print("An unexpected error occurred.")
         }
             
         // 7. Stop the loader on the main thread
-        isLoading = false
+        //isLoading = false
     }
+    
 }
+
 
