@@ -19,12 +19,4 @@ struct Preferences : Codable {
     var cleanlinessLevel: String
     var lifestyle: String
     
-    // LifeStyle enum, defines lifestyles for picker
-//    enum Lifestyle : String, Codable {
-//        case active = "Active"
-//        case relaxed = "Relaxed"
-//        case quiet = "Quiet"
-//    }
-    
-    
 }

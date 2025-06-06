@@ -30,7 +30,7 @@ struct PreferencesView: View, LocalizedError {
                         .padding(.top, 16)
                     
                     //
-                    Text("Add your preferences to get matched")
+                    Text("Edit preferences to get better matches")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     

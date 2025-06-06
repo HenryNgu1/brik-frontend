@@ -87,6 +87,7 @@ final class PreferencesViewModel : ObservableObject {
         }
     }
     
+    // SUBMIT PREFERENCES
     @MainActor
     func savePreferences() async {
         // 1. Return if input is invalid
@@ -94,7 +95,7 @@ final class PreferencesViewModel : ObservableObject {
             errorMessage = "Please correct the errors in the form"
             return
         }
-        
+        // 2. Ensure that min budget is converted to int
         guard let minB = Int(minBudget) else {
             return
         }
@@ -103,7 +104,11 @@ final class PreferencesViewModel : ObservableObject {
             return
         }
         
+        // 3. Show loader and reset error message
         isLoading = true
+        errorMessage = nil
+        
+        // 4. Build req body
         let preferences = Preferences(
             preferedLocation: preferedLocation,
             minBudget: minB,
@@ -115,10 +120,8 @@ final class PreferencesViewModel : ObservableObject {
             cleanlinessLevel: cleanlinessLevel,
             lifestyle: lifeStyle
         )
-        
-        errorMessage = nil
-        isLoading = true
-        
+
+        // 5. Post request
         do {
             let _ = try await PreferencesService.shared.savePreferences(preferences)
             isLoading = false
@@ -131,11 +134,4 @@ final class PreferencesViewModel : ObservableObject {
             isLoading = false
         }
     }
-    
-    
-    
-    
-    
-    
-    
 }

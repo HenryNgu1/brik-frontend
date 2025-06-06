@@ -8,6 +8,8 @@
 import Foundation
 import SwiftUI
 struct MainTabContainerView: View {
+    @EnvironmentObject var session : SessionManager
+    
     var body: some View {
         TabView {
             // 1. Match Tab
@@ -46,8 +48,9 @@ struct MainTabContainerView: View {
             
             // 4. Profile Tab
             NavigationView {
-                MessagesView()
+                ProfileView()
                     .navigationBarTitleDisplayMode(.inline)
+                    .environmentObject(session)
                     
             }
             .tabItem {
@@ -62,6 +65,7 @@ struct MainTabContainerView: View {
 
 #Preview {
     MainTabContainerView()
+        .environmentObject(SessionManager())
 }
 
 
