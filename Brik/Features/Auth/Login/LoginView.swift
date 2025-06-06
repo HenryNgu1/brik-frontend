@@ -8,10 +8,10 @@
 import SwiftUI
 
 struct LoginView : View {
-    
+    @EnvironmentObject private var session: SessionManager
     // 0. Track viewModel
-    @StateObject private var viewModel = LoginViewModel();
-
+    @StateObject private var viewModel = LoginViewModel()
+    
     var body : some View {
         NavigationStack {
             // 1. Layers background and content
@@ -51,11 +51,17 @@ struct LoginView : View {
                             .padding() // Add default padding
                             .background(Color(.secondarySystemBackground)) // Set input color
                             .cornerRadius(8) // Round corners
-                            .padding(.horizontal, 16) // Add horizontal padding
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(viewModel.emailError == nil
+                                            ? Color.gray.opacity(0.5)
+                                            : Color.red,
+                                            lineWidth: 1)
+                            )
                         
-                        // 3.2 Inline email validation prompt
-                        if !viewModel.email.isEmpty && !EmailValidator.isValid(viewModel.email) {
-                            Text("Enter valid email")
+                        // 3.2 Error message
+                        if let error = viewModel.emailError {
+                            Text(error)
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
@@ -66,27 +72,54 @@ struct LoginView : View {
                             .padding( )
                             .background(Color(.secondarySystemBackground))
                             .cornerRadius(8)
-                            .padding(.horizontal, 16)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(viewModel.passwordError == nil
+                                            ? Color.gray.opacity(0.5)
+                                            : Color.red,
+                                            lineWidth: 1)
+                            )
                         
-                        // 3.4 Inline password validation prompt
-                        if !viewModel.password.isEmpty && viewModel.password.count <= 8 {
-                            Text("Password must be longer than 8 characters")
+                        // 3.4 PW error message
+                        if let error = viewModel.passwordError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                        
+                        if let error = viewModel.errorMessage {
+                            Text(error)
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
                         
                         // 4. Submit button
                         Button(action: {
-                            // 4.1 Call login function to attempt to login from LoginViewModel
-                            viewModel.login(email: viewModel.email, password: viewModel.password)
+                            viewModel.validateFields()
+                            Task {
+                                // 4.1 Call login function to attempt to login from LoginViewModel
+                                await viewModel.login()
+                            }
                         }) {
-                            Text("Log in")
-                                .font(.headline) // Text font
-                                .foregroundColor(.white) //Text color
-                                .padding() // Auto padding
-                                .background(Color.blue) // Button color
-                                .cornerRadius(8) // Rounded button corners
-                        }.padding(.top, 16) // Top button padding
+                            if viewModel.isLoading {
+                                // 4.2 Show progress while login attempt
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                
+                            }
+                            else {
+                                // 4.3 Show log in text if no login attempt
+                                Text("Log in")
+                                    .font(.headline) // Text font
+                                    .foregroundColor(.white) //Text color
+                                    .padding() // Auto padding
+                                    .background(Color.blue) // Button color
+                                    .cornerRadius(8) // Rounded button corners
+                            }
+                        }
+                        .padding(.top, 16) // Top button padding
+                        .disabled(viewModel.isLoading) 
+                            
                     }
                     
                     // 4. Add spacing to push following content the the bottom
@@ -110,7 +143,9 @@ struct LoginView : View {
                         }
                     }
                     .padding(.bottom, 24) // padding for the horizontal stack
-                }.padding(.horizontal, 24) // padding left/right for the input fields vertical stack
+                }
+                .padding(.horizontal, 24) // padding left/right for the input fields vertical stack
+      
             }
         }
         

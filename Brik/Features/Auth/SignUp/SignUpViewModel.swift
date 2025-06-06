@@ -30,6 +30,7 @@ final class SignUpViewModel : ObservableObject {
     // 2. UI STATE
     @Published var isLoading: Bool = false
     @Published var currentUser: User? = nil
+    private var session = SessionManager.shared
     
     // 3. ERROR MESSAGES
     @Published var errorMessage: String?
@@ -50,13 +51,15 @@ final class SignUpViewModel : ObservableObject {
 
     // 5. CAN SUBMIT: validation computed variable
     var canSubmit : Bool {
-        !name.isEmpty && // 1. Check if name is not empty
-        EmailValidator.isValid(email) && // 2. Check valid email format  from helper function from helpers/emailvalidator
-        password == confirmPassword && // 3. Check is password entered is the same from computed
-        !gender.isEmpty && // 4. Check gender is not empty
-        !location.isEmpty && // 5. Check Location is not empty
-        !bio.isEmpty &&// 6. Check is bio is not empty
-        age >= 18 // 7. check user is 18 +
+        errorMessage == nil &&
+        emailErrorMessage == nil &&
+        confirmPasswordErrorMessage == nil &&
+        passwordErrorMessage == nil &&
+        nameErrorMessage == nil &&
+        genderErrorMessage == nil &&
+        locationErrorMessage == nil &&
+        bioErrorMessage == nil &&
+        dateOfBirthErrorMessage == nil
     }
     
     // VALIDATION ERROR MESSAGES FUNCTION
@@ -134,13 +137,17 @@ final class SignUpViewModel : ObservableObject {
     }
         
     // SIGNUP FUNCTION
+    @MainActor
     func signUp() async {
         
         // 1. Check is all required fields have valid input
-        guard canSubmit else { return }
+        guard canSubmit else {
+            errorMessage = "Please fill in all required fields"
+            return
+        }
         
         // 2. Show loader
-        //isLoading = true
+        isLoading = true
             
         do {
             // 3. Await the network call and get response back
@@ -154,28 +161,31 @@ final class SignUpViewModel : ObservableObject {
                 location: location,
                 profileImage: profileImage
             )
-                
-            // 4. Save JWT in Keychain from response
-            try KeychainHelper.standard.SaveToken(response.token)
-                
-            // 5. Update the current user
-            currentUser = response.user
+            
+            // 4. Set user and save token in keychain
+            session.signIn(user: response.user, token: response.token)
         }
         catch let authError as AuthError {
             // 6.1 If auth error occurs, display error
-            print(authError.localizedDescription)
+            errorMessage = authError.localizedDescription
         }
         catch let keychainError as KeychainError{
             // 6.2 If keychain error occurs, display error
-            print(keychainError.localizedDescription)
+            errorMessage = keychainError.localizedDescription
         }
         catch {
             // 6.3 If any other error occurs, display that error
-            print("An unexpected error occurred.")
+            errorMessage = "An unexpected error occurred."
         }
             
         // 7. Stop the loader on the main thread
-        //isLoading = false
+        isLoading = false
+        
+        // 8. Redirect to user preferences TODO:
+        // Fetch user pref
+        // If there are no user pref for this user
+        // Show user pref view
+        // Else go to match view
     }
     
 }

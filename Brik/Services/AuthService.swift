@@ -45,7 +45,7 @@ final class AuthService {
     // LOGIN
     func login(email: String, password: String) async throws -> LoginResponse {
         
-        // 1. Build the endpoint, concate the baseurl, guard to ensure if it fails exits and throw error
+        // 1. Build the endpoint, concat the baseurl, guard to ensure if it fails exits and throw error
         guard let url = URL(string: "/auth/login", relativeTo: baseURL) else {
             throw AuthError.invalidURL
         }
@@ -57,7 +57,7 @@ final class AuthService {
         // 2.3 Add application/json to the header to let server know to parse it as json
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        // 3. Create and set the body for the request. Convert the LoginRequest model into json format using encode
+        // 3. Create and set the body for the request. Convert the LoginRequest model into json format
         do {
             request.httpBody = try JSONEncoder().encode(LoginRequest(email: email, password: password))
         }
@@ -113,8 +113,6 @@ final class AuthService {
             throw AuthError.invalidURL
         }
         
-        print(url)
-        
         // 2. Create a request object
         var request = URLRequest(url: url)
         request.httpMethod = "POST" // Set the request method to post
@@ -141,16 +139,7 @@ final class AuthService {
         
         // 4.1 Set the request body as the multipart body we built
         request.httpBody = bodyData
-//        print(bodyData)
-//        
-//        if let bodyString = String(data: bodyData, encoding: .utf8) {
-//            print("Sending multipart body:\n\(bodyString)")
-//        } else {
-//            print("Sending multipart body as raw bytes, not valid UTF-8")
-//            print(bodyData) // fallback to printing raw Data
-//        }
 
-        
         // 5. Perform the call
         let (data, response) : (Data, URLResponse) // Store the network call here: data is the body, response is header
     

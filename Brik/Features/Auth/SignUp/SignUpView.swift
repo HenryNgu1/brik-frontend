@@ -10,7 +10,8 @@ import SwiftUI
 
 struct SignUpView: View {
     
-    // SET UP
+    // 0. SET UP
+    @EnvironmentObject private var session : SessionManager
     @StateObject var viewModel = SignUpViewModel()
     @StateObject private var autocomplete = SuburbAutoCompleteService()
     @State private var showImagePicker = false
@@ -24,26 +25,29 @@ struct SignUpView: View {
             Color("SplashBackground")
                 .ignoresSafeArea()
 
-            // 2. Allow contents to be scrollable
+            // 1.1. Allow contents to be scrollable
             ScrollView(.vertical, showsIndicators: true) {
                 
-                // 3. Center and stack contents vertically
+                // 1.2. Center and stack contents vertically
                 VStack(spacing: 16){
-                    // 3.1. Image
+                
+                    
+                    // 2. LOGO
                     Image("AppLogo")
                         .resizable()
                         .frame(width: 90, height: 90)
-                        .padding()
+                        .padding(.top, 16)
                     
-                    // 3.2. Log in text
+                    // 3. LOG IN TEXT
                     Text("Create an account to continue")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                        .padding(.bottom, 16)
                     
-                    // 4. Form contents
+                    // FORM INPUTS
                     Group {
-                        ZStack {
+                        
+                        // 4.1 IMAGE PICKER
+                        Group {
                             if let image = viewModel.profileImage {
                                 // Show the user’s selected image
                                 Image(uiImage: image)
@@ -54,7 +58,6 @@ struct SignUpView: View {
                                     .overlay(Circle().stroke(Color.gray, lineWidth: 2))
                             } else {
                                 // Show placeholder circle
-                                
                                 Circle()
                                 .fill(Color(.secondarySystemBackground))
                                 .frame(width: 120, height: 120)
@@ -66,7 +69,7 @@ struct SignUpView: View {
                             }
                         }
                         .onTapGesture {
-                        // Present the photo picker
+                        // 4.1 Present the photo picker
                         showImagePicker = true
                         }
                         .padding(.top, 30)
@@ -291,23 +294,44 @@ struct SignUpView: View {
                                 .foregroundColor(.red)
                         }
                         
+                        if let error = viewModel.errorMessage {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                        
+                        
                         // 13. Submit button
                         Button(action: {
                             viewModel.validateFields()
                             Task {
+                                // 13.1 Attempt to make network call
                                 await viewModel.signUp()
                             }
                         }) {
-                            Text("Create Account")
-                                .font(.headline) // Text font
-                                .foregroundColor(.white) //Text color
-                                .padding() // Auto padding
-                                .background(Color.blue) // Button color
-                                .cornerRadius(8) // Rounded button corners
+                            
+                            if (viewModel.isLoading)
+                            {
+                                // 13.2 Show loading circle if submitting, else show create text
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            }
+                            else {
+                                Text("Create Account")
+                                    .font(.headline) // Text font
+                                    .foregroundColor(.white) //Text color
+                                    .padding() // Auto padding
+                                    .background(Color.blue) // Button color
+                                    .cornerRadius(8) // Rounded button corners
+                            }
+                            
                         }
-                        .padding(.vertical, 24) // Top button padding
+                        .padding(.top, 24) // Top button padding
+                        // 13.3 Disable the button to prevent multiple signup
+                        .disabled(viewModel.isLoading)
                             
                     }
+                    Spacer()
                     
                     HStack {
                         // 14. Redirect to login in
@@ -323,7 +347,7 @@ struct SignUpView: View {
                                 .foregroundColor(Color(.blue)) // font color
                         }
                     }
-                    .padding(.bottom, 24) // bottom padding for log in link
+                    .padding(.vertical, 32) // bottom padding for log in link
                 }
                 .padding(.horizontal, 24) // padding for form vertical stack
             }

@@ -6,23 +6,6 @@
 //
 
 import Foundation
-
-// 1. LOG IN
-//
-// Model of request we send to backend to create a user
-struct LoginRequest: Codable {
-    let email: String
-    let password: String
-}
-
-// Model the json response we receive from the backend
-struct LoginResponse: Codable {
-    let token: String
-    let user: User
-}
-// 3. USER
-//
-// Model of user
 struct User: Codable {
     let id: Int
     let email: String
@@ -55,5 +38,13 @@ struct SignUpResponse : Codable {
     let user: User
 }
 
+struct LoginRequest: Codable {
+    let email: String
+    let password: String
+}
 
-
+// Model the json response we receive from the backend
+struct LoginResponse: Codable {
+    let token: String
+    let user: User
+}
