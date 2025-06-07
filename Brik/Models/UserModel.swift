@@ -15,7 +15,7 @@ struct User: Codable {
     let gender: String
     let bio: String
     let location: String
+    let rating: String
     let profileImage: String?
-    let rating: Int
-    let createdAt: Date
+    let createdAt: String
 }

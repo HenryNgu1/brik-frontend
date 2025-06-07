@@ -12,6 +12,7 @@ struct MainTabContainerView: View {
     
     var body: some View {
         TabView {
+            
             // 1. Match Tab
             NavigationView {
                 MatchView()
@@ -63,9 +64,29 @@ struct MainTabContainerView: View {
     }
 }
 
-#Preview {
-    MainTabContainerView()
-        .environmentObject(SessionManager())
+
+// MOCK DATA for preview
+struct MainContainerView_Previews: PreviewProvider {
+    static var previews: some View {
+        let session = SessionManager()
+        session.currentUser = User(
+            id: 42,
+            email: "user@example.com",
+            name: "user user",
+            age: 25,
+            gender: "Female",
+            bio: "I love finding new roommates who share my passion for hiking and board games!",
+            location: "Melbourne, Australia",
+            rating: "0",
+            profileImage: nil,
+            createdAt: "tuesday"
+        )
+
+        return NavigationView {
+            MainTabContainerView()
+                .environmentObject(session)
+        }
+    }
 }
 
 

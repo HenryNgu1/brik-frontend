@@ -38,9 +38,9 @@ struct PreferencesView: View, LocalizedError {
                         .padding()
                         .background(Color(.secondarySystemBackground))
                         .cornerRadius(8)
-                        .onChange(of: viewModel.preferedLocation) {
-                            autocomplete.update(query: viewModel.preferedLocation)
-                        }
+//                        .onChange(of: viewModel.preferedLocation) {
+//                            autocomplete.update(query: viewModel.preferedLocation)
+//                        }
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(viewModel.preferedLocationError == nil
@@ -48,6 +48,12 @@ struct PreferencesView: View, LocalizedError {
                                         : Color.red,
                                         lineWidth: 1)
                         )
+                    //
+                    if let error = viewModel.preferedLocationError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
                     
                     VStack(alignment: .leading, spacing: 20){
                         
@@ -58,6 +64,20 @@ struct PreferencesView: View, LocalizedError {
                                     .keyboardType(.numberPad)
                                     .background(Color(.secondarySystemBackground))
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(viewModel.minbudgetError == nil
+                                                    ? Color.gray.opacity(0.5)
+                                                    : Color.red,
+                                                    lineWidth: 1)
+                                    )
+                                //
+                                if let error = viewModel.minbudgetError {
+                                    Text(error)
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                }
+                                
                             }
                             
                             VStack(alignment: .leading) {
@@ -66,6 +86,19 @@ struct PreferencesView: View, LocalizedError {
                                     .keyboardType(.numberPad)
                                     .background(Color(.secondarySystemBackground))
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(viewModel.maxbudgetError == nil
+                                                    ? Color.gray.opacity(0.5)
+                                                    : Color.red,
+                                                    lineWidth: 1)
+                                    )
+                                //
+                                if let error = viewModel.maxbudgetError {
+                                    Text(error)
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                }
                             }
                         }
                         
@@ -74,22 +107,33 @@ struct PreferencesView: View, LocalizedError {
                         // Inline comment: Toggle binds directly to a Bool, toggles UI state.
                         Toggle("Smoking Allowed", isOn: $viewModel.smokingAllowed)
                         
-                        //VStack(alignment: .leading) {
-                        Text("Age Range: \(viewModel.minAge) - \(viewModel.maxAge)")
-                        //VStack {
                         Stepper("Min Age: \(viewModel.minAge)", value: $viewModel.minAge, in: 18...100)
-                        // Inline comment: Stepper provides discrete integer controls for age.
-                        Stepper("Max Age: \(viewModel.maxAge)", value: $viewModel.maxAge, in: viewModel.minAge...100)
-                        // Inline comment: minAge constraint ensures maxAge >= minAge
+                            
+                        if let error = viewModel.minAgeError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
                         
-                            Text("Cleanliness Level")
-                            Picker("Cleanliness Level", selection: $viewModel.cleanlinessLevel) {
-                                Text("Low").tag("Low")
-                                Text("Medium").tag("Medium")
-                                Text("High").tag("High")
-                            }
+                        //
+                        Stepper("Max Age: \(viewModel.maxAge)", value: $viewModel.maxAge, in: viewModel.minAge...100)
+                        
+                        if let error = viewModel.maxAgeError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                        
+                        //
+                        Text("Cleanliness Level")
+                        Picker("Cleanliness Level", selection: $viewModel.cleanlinessLevel) {
+                            Text("Low").tag("Low")
+                            Text("Medium").tag("Medium")
+                            Text("High").tag("High")
+                        }
                         .pickerStyle(.segmented)
-                        // Inline comment: Segmented style popular for choices like Low/Medium/High.
+                        
+                        //
                         Text("Lifestyle")
                         Picker("Lifestyle", selection: $viewModel.lifeStyle) {
                             Text("Quite").tag("Quite")
@@ -97,14 +141,19 @@ struct PreferencesView: View, LocalizedError {
                             Text("Active").tag("Active")
                         }
                         .pickerStyle(.segmented)
-                        // Inline comment: Segmented style popular for choices like Low/Medium/High.
+                        
                         
                     } // group end
                     
+                    if let error = viewModel.errorMessage {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
                     Button(action: {
                         viewModel.validateFields()
                         Task {
-                            await viewModel.savePreferences()
+                            await viewModel.createPreferences()
                         }
                     }) {
                         Text("Save Preferences")
@@ -115,6 +164,11 @@ struct PreferencesView: View, LocalizedError {
                     }
                     .padding(.vertical, 26)
                 }.padding(.horizontal, 24)
+            }
+            .onAppear {
+                Task {
+                    await viewModel.loadPreferences()
+                }
             }
         }
     }

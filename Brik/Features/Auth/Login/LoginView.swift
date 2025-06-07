@@ -9,7 +9,6 @@ import SwiftUI
 
 struct LoginView : View {
     @EnvironmentObject private var session: SessionManager
-    // 0. Track viewModel
     @StateObject private var viewModel = LoginViewModel()
     
     var body : some View {

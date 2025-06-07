@@ -71,6 +71,11 @@ final class AuthService {
         do {
             // 4.2 URLSession.shared method performs the network call. Data takes in an argument of type URLRequest
             (data, response) = try await URLSession.shared.data(for: request)
+            
+            //DEBUG: If you want to see the body of the response
+//            if let text = String(data: data, encoding: .utf8) {
+//                print(" Raw login response:\n", text)
+//            }
         }
         catch {
             throw AuthError.unknown(error)
@@ -87,7 +92,10 @@ final class AuthService {
         
         // 6. Convert the response recieved from the backend from the call from JSON to LoginResponse
         do {
-            let decodedResponse = try JSONDecoder().decode(LoginResponse.self, from: data)
+            let decoder = JSONDecoder()
+            //decoder.dateDecodingStrategy = .iso8601 // ensure our decoder can decode the date from string to date
+            let decodedResponse = try decoder.decode(LoginResponse.self, from: data)
+            
             return decodedResponse
         }
         catch {
@@ -169,7 +177,9 @@ final class AuthService {
         // 6. Convert response (JSON) into SignUpReponse format
         do {
             //  6.1 Attempt convert the response into Codable type which SignUpResponse model is type codable
-            let decodedReponse = try JSONDecoder().decode(SignUpResponse.self, from: data)
+            let decoder = JSONDecoder()
+            //decoder.dateDecodingStrategy = .iso8601
+            let decodedReponse = try decoder.decode(SignUpResponse.self, from: data)
             return decodedReponse
         }
         catch {

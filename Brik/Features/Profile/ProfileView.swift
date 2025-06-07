@@ -112,6 +112,7 @@ struct ProfileView: View {
                                     .background(Color.blue)
                                     .cornerRadius(8)
                                 }
+                                
                             }
                             
                             Text("Age")
@@ -147,34 +148,42 @@ struct ProfileView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                                 .accessibilityLabel("Bio: \(user.bio)")
                         
-                            HStack {
-                                Text("Rating")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                HStack(spacing: 2) {
-                                    ForEach(0..<5) { star in
-                                        Image(systemName: star < user.rating ? "star.fill" : "star")
-                                            .foregroundColor(star < user.rating ? .yellow : .gray)
-                                            .accessibilityHidden(true)
-                                    }
-                                }
-                                .accessibilityLabel("Rating: \(user.rating) out of 5 stars")
-                            }
-                            .padding(.top, 12)
+//                            HStack {
+//                                Text("Rating")
+//                                    .font(.subheadline)
+//                                    .foregroundColor(.secondary)
+//                                Spacer()
+//                                HStack(spacing: 2) {
+//                                    ForEach(0..<5) { star in
+//                                        Image(systemName: star < user.rating ? "star.fill" : "star")
+//                                            .foregroundColor(star < user.rating ? .yellow : .gray)
+//                                            .accessibilityHidden(true)
+//                                    }
+//                                }
+//                                .accessibilityLabel("Rating: \(user.rating) out of 5 stars")
+//                            }
+//                            .padding(.top, 12)
                             
                             Text("Member Since")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                                 .padding(.top, 12)
-                            Text(Self.dateFormatter.string(from: user.createdAt))
-                                .font(.body)
-                                .accessibilityLabel("Member since \(Self.dateFormatter.string(from: user.createdAt))")
+                            Text(user.createdAt)
+                                
                             
                                 
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(12)
+                        
+                        Button {
+                            session.signOut()
+                        } label: {
+                            Text("Sign Out")
+                                .font(.headline)
+                                .foregroundColor(.red)
+                                .padding(.vertical, 12)
+                        }
                         
                     }
                     .padding()
@@ -188,7 +197,7 @@ struct ProfileView: View {
                         .font(.title2)
                         .foregroundColor(.secondary)
                     Button("Go to Login") {
-                        // Add logic to navigate back to login screen
+                        session.signOut()
                     }
                     .buttonStyle(.borderedProminent)
                 }
@@ -203,7 +212,6 @@ struct ProfileView: View {
 
 
 //  Preview with Mock Data
-#if DEBUG
 struct ProfileView_Previews: PreviewProvider {
     static var previews: some View {
         let session = SessionManager()
@@ -215,9 +223,9 @@ struct ProfileView_Previews: PreviewProvider {
             gender: "Female",
             bio: "I love finding new roommates who share my passion for hiking and board games!",
             location: "Melbourne, Australia",
+            rating: "0",
             profileImage: nil,
-            rating: 4,
-            createdAt: Date(timeIntervalSince1970: 1_600_000_000)
+            createdAt: "tuesday"
         )
 
         return NavigationView {
@@ -226,4 +234,3 @@ struct ProfileView_Previews: PreviewProvider {
         }
     }
 }
-#endif

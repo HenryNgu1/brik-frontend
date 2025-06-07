@@ -51,7 +51,6 @@ final class SignUpViewModel : ObservableObject {
 
     // 5. CAN SUBMIT: validation computed variable
     var canSubmit : Bool {
-        errorMessage == nil &&
         emailErrorMessage == nil &&
         confirmPasswordErrorMessage == nil &&
         passwordErrorMessage == nil &&
@@ -146,8 +145,9 @@ final class SignUpViewModel : ObservableObject {
             return
         }
         
-        // 2. Show loader
+        // 2. Show loader and reset error message
         isLoading = true
+        errorMessage = nil
             
         do {
             // 3. Await the network call and get response back
@@ -175,17 +175,12 @@ final class SignUpViewModel : ObservableObject {
         }
         catch {
             // 6.3 If any other error occurs, display that error
-            errorMessage = "An unexpected error occurred."
+            errorMessage = "Login failed: \(error.localizedDescription)"
         }
             
         // 7. Stop the loader on the main thread
         isLoading = false
-        
-        // 8. Redirect to user preferences TODO:
-        // Fetch user pref
-        // If there are no user pref for this user
-        // Show user pref view
-        // Else go to match view
+
     }
     
 }

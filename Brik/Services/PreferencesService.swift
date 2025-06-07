@@ -16,6 +16,7 @@ enum PreferencesError : Error, LocalizedError {
     case decodingError(Error)
     case unknown(Error)
     
+    
     var errorDescription: String? {
         switch self {
         case .invalidURL:
@@ -31,6 +32,7 @@ enum PreferencesError : Error, LocalizedError {
         case .unknown(let err):
             return err.localizedDescription
         }
+        
     }
 }
 
@@ -41,17 +43,17 @@ final class PreferencesService {
     private init() {}
     
     // Save preferences function
-    func savePreferences(_ preferences: Preferences) async throws -> Preferences {
+    func createPreferences(_ preferences: Preferences, token: String) async throws {
         
         // 1. Construct URL
         guard let url = baseURL else {
             throw PreferencesError.invalidURL
         }
         
-        // 2. Retrieve JWT token
-        guard let token = KeychainHelper.standard.retrieveToken() else {
-            throw PreferencesError.missingAuthToken
-        }
+//        // 2. Retrieve JWT token
+//        guard let token = KeychainHelper.standard.retrieveToken() else {
+//            throw PreferencesError.missingAuthToken
+//        }
         
         // 3. Build request
         var request = URLRequest(url: url)
@@ -61,14 +63,39 @@ final class PreferencesService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
-        // 5. Encode preferences as JSON, turn preferences model into json format
-        do {
-            request.httpBody = try JSONEncoder().encode(preferences)
+        // 5. Perform network call
+        let (_, response) = try await URLSession.shared.data(for: request)
+            
+        // 6. Check status of call
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw PreferencesError.invalidResponse(statusCode: -1)
         }
-        catch {
-            throw PreferencesError.decodingError(error)
+        
+        // 7. If status is successful return response
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw PreferencesError.invalidResponse(statusCode: httpResponse.statusCode)
         }
-        // 6. Perform network call
+    }
+    
+    func fetchPreferences(token: String) async throws -> Preferences {
+        // 1. Contruct URL
+        guard let url = baseURL else {
+            throw PreferencesError.invalidURL
+        }
+        
+//        // 2. Retrive JWT token
+//        guard let token = KeychainHelper.standard.retrieveToken() else {
+//            throw PreferencesError.missingAuthToken
+//        }
+        
+        // 3. Build request
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        
+        // 4. Imbed auth token in header
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        // 5. Performm network call
         let (data, response) : (Data, URLResponse)
         do {
             (data, response) = try await URLSession.shared.data(for: request)
@@ -76,17 +103,18 @@ final class PreferencesService {
         catch {
             throw PreferencesError.unknown(error)
         }
-        // 7. Check status of call
+        
+        // 6. Check status of call
         guard let httpResponse = response as? HTTPURLResponse else {
             throw PreferencesError.invalidResponse(statusCode: -1)
         }
         
-        // 8. If status is successful return response
+        // 7. check If status is successful
         guard (200...299).contains(httpResponse.statusCode) else {
             throw PreferencesError.invalidResponse(statusCode: httpResponse.statusCode)
         }
         
-        // 9. Attempt to decode server response and return
+        // 8. Attempt to decode response
         do {
             let decodedResponse = try JSONDecoder().decode(Preferences.self, from: data)
             return decodedResponse
@@ -95,5 +123,4 @@ final class PreferencesService {
             throw PreferencesError.decodingError(error)
         }
     }
-    
 }

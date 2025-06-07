@@ -13,7 +13,7 @@ final class SuburbAutoCompleteService: NSObject, ObservableObject, MKLocalSearch
     
     @Published var suggestions : [String] = []
     
-    // 1. apples autocomplete engine for map queries
+    // 1. Apples autocomplete engine for map queries
     private let completer = MKLocalSearchCompleter()
     
     // 2. Customize NSObject initialiser by adding our own initialiser
@@ -37,8 +37,6 @@ final class SuburbAutoCompleteService: NSObject, ObservableObject, MKLocalSearch
     func update(query: String) {
         completer.queryFragment = query
     }
-        
-    
 }
 
 extension SuburbAutoCompleteService {

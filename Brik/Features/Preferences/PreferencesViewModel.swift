@@ -11,13 +11,13 @@ final class PreferencesViewModel : ObservableObject {
     // INPUTS
     @Published var preferedLocation: String = ""
     @Published var minBudget : String = "0"
-    @Published var maxBudget : String = "80000"
+    @Published var maxBudget : String = "0"
     @Published var petsAllowed : Bool = false
     @Published var smokingAllowed : Bool = false
     @Published var minAge : Int = 18
     @Published var maxAge : Int = 100
-    @Published var cleanlinessLevel : String = "Medium"
-    @Published var lifeStyle : String = "Relaxed"
+    @Published var cleanlinessLevel : String = "Low"
+    @Published var lifeStyle : String = "Quite"
     // UI STATES
     @Published var isLoading : Bool = false
     // ERRORS
@@ -46,7 +46,7 @@ final class PreferencesViewModel : ObservableObject {
     }
     
     
-    // VALIDATE FIELDS
+    // VALIDATE FIELDS and Assign Error MSG
     func validateFields() {
         if preferedLocation.isEmpty {
             preferedLocationError = "Preffered Location is required"
@@ -55,32 +55,32 @@ final class PreferencesViewModel : ObservableObject {
         }
         
         if minAge > maxAge {
-            minAgeError = "Min Age must be lower than max age"
+            minAgeError = "Must be lower than max age"
         } else {
             minAgeError = nil
         }
         if maxAge < minAge {
-            maxAgeError = "Max Age must be higher than min age"
+            maxAgeError = "Must be higher than min age"
         } else {
             maxAgeError = nil
         }
         
         guard let minB = Int(minBudget), let maxB = Int(maxBudget) else {
-            minbudgetError = "Min Budget must be a number"
-            maxbudgetError = "Max Budget must be a number"
+            minbudgetError = "Must be a number"
+            maxbudgetError = "Must be a number"
             return
         }
         minbudgetError = nil
         maxbudgetError = nil
         
         if minB > maxB {
-            minbudgetError = "Min Budget must be lower than max budget"
+            minbudgetError = "Must be lower than max budget"
         } else {
             minbudgetError = nil
         }
         
         if maxB < minB {
-            maxbudgetError = "Max Budget must be higher than min budget"
+            maxbudgetError = "Must be higher than min budget"
         }
         else {
             maxbudgetError = nil
@@ -89,18 +89,23 @@ final class PreferencesViewModel : ObservableObject {
     
     // SUBMIT PREFERENCES
     @MainActor
-    func savePreferences() async {
+    func createPreferences() async {
         // 1. Return if input is invalid
         guard canSubmit else {
             errorMessage = "Please correct the errors in the form"
             return
         }
-        // 2. Ensure that min budget is converted to int
-        guard let minB = Int(minBudget) else {
+        // 2. Convert the budgets (we know validateFields already flagged parse errors)
+        guard let minB = Int(minBudget),
+              let maxB = Int(maxBudget) else {
+            // In practice this shouldn’t happen if validateFields ran,
+            // but just in case:
+            errorMessage = "Please enter valid numeric budgets"
             return
         }
         
-        guard let maxB = Int(maxBudget) else {
+        guard let token = KeychainHelper.standard.retrieveToken() else {
+            errorMessage = "Please log in to create preferences"
             return
         }
         
@@ -121,17 +126,55 @@ final class PreferencesViewModel : ObservableObject {
             lifestyle: lifeStyle
         )
 
-        // 5. Post request
+        // 5. Make request
         do {
-            let _ = try await PreferencesService.shared.savePreferences(preferences)
+            _ = try await PreferencesService.shared.createPreferences(preferences,token: token)
             isLoading = false
+        }
+        // 6. Catch errors
+        catch let prefError as PreferencesError {
+            errorMessage = prefError.errorDescription
+            isLoading = false
+        }
+        catch {
+            errorMessage = "An error occurred: \(error.localizedDescription)"
+            isLoading = false
+        }
+    }
+    
+    @MainActor
+    func loadPreferences() async {
+        guard let token = KeychainHelper.standard.retrieveToken() else {
+            errorMessage = "Please log in to view preferences"
+            return
+        }
+        
+        isLoading = true
+        errorMessage = nil
+        
+        // Try get preferences if they exist
+        do {
+            // 1. Fetch user preferences
+            let preferences = try await PreferencesService.shared.fetchPreferences(token: token)
+            
+            // 2. Bound fetched preferences to UI
+            preferedLocation = preferences.preferedLocation
+            minBudget = String(preferences.minBudget)
+            maxBudget = String(preferences.maxBudget)
+            petsAllowed = preferences.petsAllowed
+            smokingAllowed = preferences.smokingAllowed
+            minAge = preferences.minAge
+            maxAge = preferences.maxAge
+            cleanlinessLevel = preferences.cleanlinessLevel
+            lifeStyle = preferences.lifestyle
+            
         }
         catch let prefError as PreferencesError {
             errorMessage = prefError.errorDescription
         }
         catch {
             errorMessage = "An error occurred: \(error.localizedDescription)"
-            isLoading = false
         }
+        isLoading = false
     }
 }
