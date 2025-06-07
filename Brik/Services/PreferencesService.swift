@@ -49,12 +49,7 @@ final class PreferencesService {
         guard let url = baseURL else {
             throw PreferencesError.invalidURL
         }
-        
-//        // 2. Retrieve JWT token
-//        guard let token = KeychainHelper.standard.retrieveToken() else {
-//            throw PreferencesError.missingAuthToken
-//        }
-        
+    
         // 3. Build request
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -63,22 +58,30 @@ final class PreferencesService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
-        // 5. Perform network call
+        // 5. encode preferences model into the body
+        do {
+            request.httpBody = try JSONEncoder().encode(preferences)
+        }
+        catch {
+            throw PreferencesError.unknown(error)
+        }
+        
+        // 6. Perform network call
         let (_, response) = try await URLSession.shared.data(for: request)
             
-        // 6. Check status of call
+        // 7. Check status of call
         guard let httpResponse = response as? HTTPURLResponse else {
             throw PreferencesError.invalidResponse(statusCode: -1)
         }
         
-        // 7. If status is successful return response
+        // 8. If status is successful return response
         guard (200...299).contains(httpResponse.statusCode) else {
             throw PreferencesError.invalidResponse(statusCode: httpResponse.statusCode)
         }
     }
     
     func fetchPreferences(token: String) async throws -> Preferences {
-        // 1. Contruct URL
+        // 1. Construct URL
         guard let url = baseURL else {
             throw PreferencesError.invalidURL
         }

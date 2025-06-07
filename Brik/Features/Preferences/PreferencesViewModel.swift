@@ -142,7 +142,6 @@ final class PreferencesViewModel : ObservableObject {
         }
     }
     
-    @MainActor
     func loadPreferences() async {
         guard let token = KeychainHelper.standard.retrieveToken() else {
             errorMessage = "Please log in to view preferences"

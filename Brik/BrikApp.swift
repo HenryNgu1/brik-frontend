@@ -19,7 +19,7 @@ struct BrikApp: App {
                 MainTabContainerView()
                     .environmentObject(session)
             } else {
-                // Otherwise, show the login (or sign‐up) screen:
+                // Otherwise, show the login screen:
                 LoginView()
                     .environmentObject(session)
             }
