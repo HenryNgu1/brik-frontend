@@ -20,6 +20,7 @@ final class PreferencesViewModel : ObservableObject {
     @Published var lifeStyle : String = "Quite"
     // UI STATES
     @Published var isLoading : Bool = false
+    @Published private(set) var hasPreferences = false
     // ERRORS
     @Published var errorMessage : String? = nil
     @Published var preferedLocationError : String? = nil
@@ -46,7 +47,7 @@ final class PreferencesViewModel : ObservableObject {
     }
     
     
-    // VALIDATE FIELDS and Assign Error MSG
+    // VALIDATE FIELDS AND ASSIGN ERROR MSG
     func validateFields() {
         if preferedLocation.isEmpty {
             preferedLocationError = "Preffered Location is required"
@@ -89,8 +90,8 @@ final class PreferencesViewModel : ObservableObject {
     
     // SUBMIT PREFERENCES
     @MainActor
-    func createPreferences() async {
-        // 1. Return if input is invalid
+    func savePreferences() async {
+        // 1. Ensure inputs are valid
         guard canSubmit else {
             errorMessage = "Please correct the errors in the form"
             return
@@ -98,12 +99,11 @@ final class PreferencesViewModel : ObservableObject {
         // 2. Convert the budgets (we know validateFields already flagged parse errors)
         guard let minB = Int(minBudget),
               let maxB = Int(maxBudget) else {
-            // In practice this shouldn’t happen if validateFields ran,
-            // but just in case:
             errorMessage = "Please enter valid numeric budgets"
             return
         }
         
+        // 3. Get auth token
         guard let token = KeychainHelper.standard.retrieveToken() else {
             errorMessage = "Please log in to create preferences"
             return
@@ -126,10 +126,19 @@ final class PreferencesViewModel : ObservableObject {
             lifestyle: lifeStyle
         )
 
-        // 5. Make request
+        // 5. Choose POST or PUT request
         do {
-            _ = try await PreferencesService.shared.createPreferences(preferences,token: token)
-            isLoading = false
+            if hasPreferences {
+                //5.1 POST request if user has not set preferences
+               // _ = try await PreferencesService.shared.Update()
+                return
+            }
+            else {
+                // 5.2 PUT / update request if user already has preferences
+                _ = try await PreferencesService.shared.createPreferences(preferences,token: token)
+               hasPreferences = true
+            }
+            
         }
         // 6. Catch errors
         catch let prefError as PreferencesError {
@@ -140,8 +149,11 @@ final class PreferencesViewModel : ObservableObject {
             errorMessage = "An error occurred: \(error.localizedDescription)"
             isLoading = false
         }
+        isLoading = false
     }
     
+    // LOAD USER PREFERENCES
+    @MainActor
     func loadPreferences() async {
         guard let token = KeychainHelper.standard.retrieveToken() else {
             errorMessage = "Please log in to view preferences"
@@ -167,6 +179,8 @@ final class PreferencesViewModel : ObservableObject {
             cleanlinessLevel = preferences.cleanlinessLevel
             lifeStyle = preferences.lifestyle
             
+            // 3. Remember user has preferences set
+            hasPreferences = true
         }
         catch let prefError as PreferencesError {
             errorMessage = prefError.errorDescription

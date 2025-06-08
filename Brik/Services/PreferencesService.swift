@@ -7,7 +7,7 @@
 
 import Foundation
 
-// Enum of possible errors
+// Enum of possible errors and error mapping
 enum PreferencesError : Error, LocalizedError {
     case invalidURL
     case missingAuthToken
@@ -15,7 +15,7 @@ enum PreferencesError : Error, LocalizedError {
     case serverError(message : String)
     case decodingError(Error)
     case unknown(Error)
-    
+    case notFound
     
     var errorDescription: String? {
         switch self {
@@ -31,18 +31,21 @@ enum PreferencesError : Error, LocalizedError {
             return "Failed to decode server response."
         case .unknown(let err):
             return err.localizedDescription
+        case .notFound:
+            return "No preferences found."
         }
         
     }
 }
 
 final class PreferencesService {
-    // Singleton approach
+    // SINGLETON APPROACH
     static let shared = PreferencesService()
-    var baseURL = URL(string: "http://localhost:3000/User/Preferences")
+    
+    var baseURL = URL(string: "http://localhost:3000/user/preferences")
     private init() {}
     
-    // Save preferences function
+    // CREATE PREFERENCE RECORD
     func createPreferences(_ preferences: Preferences, token: String) async throws {
         
         // 1. Construct URL
@@ -58,7 +61,7 @@ final class PreferencesService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
-        // 5. encode preferences model into the body
+        // 5. Encode preferences model into the body
         do {
             request.httpBody = try JSONEncoder().encode(preferences)
         }
@@ -73,32 +76,33 @@ final class PreferencesService {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw PreferencesError.invalidResponse(statusCode: -1)
         }
-        
-        // 8. If status is successful return response
-        guard (200...299).contains(httpResponse.statusCode) else {
+        switch httpResponse.statusCode {
+            // 7.1 Successful status we break
+        case 200...299:
+            break
+        case 404:
+            // 7.2 404 means no records found
+            throw PreferencesError.notFound
+        default :
             throw PreferencesError.invalidResponse(statusCode: httpResponse.statusCode)
         }
     }
     
+    // FETCH USER PREFERENCES
     func fetchPreferences(token: String) async throws -> Preferences {
         // 1. Construct URL
         guard let url = baseURL else {
             throw PreferencesError.invalidURL
         }
         
-//        // 2. Retrive JWT token
-//        guard let token = KeychainHelper.standard.retrieveToken() else {
-//            throw PreferencesError.missingAuthToken
-//        }
-        
-        // 3. Build request
+        // 2. Build request
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         
-        // 4. Imbed auth token in header
+        // 3. Imbed auth token in header
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
-        // 5. Performm network call
+        // 4. Performm network call
         let (data, response) : (Data, URLResponse)
         do {
             (data, response) = try await URLSession.shared.data(for: request)
@@ -107,17 +111,17 @@ final class PreferencesService {
             throw PreferencesError.unknown(error)
         }
         
-        // 6. Check status of call
+        // 5. Check status of call
         guard let httpResponse = response as? HTTPURLResponse else {
             throw PreferencesError.invalidResponse(statusCode: -1)
         }
         
-        // 7. check If status is successful
+        // 6. check If status is successful
         guard (200...299).contains(httpResponse.statusCode) else {
             throw PreferencesError.invalidResponse(statusCode: httpResponse.statusCode)
         }
         
-        // 8. Attempt to decode response
+        // 7. Attempt to decode response
         do {
             let decodedResponse = try JSONDecoder().decode(Preferences.self, from: data)
             return decodedResponse
@@ -125,5 +129,17 @@ final class PreferencesService {
         catch {
             throw PreferencesError.decodingError(error)
         }
+    }
+    
+    // UPDATE PREFERENCE
+    func updatePreferences(token: String, preferences: Preferences) async throws {
+        guard let url = baseURL else {
+            throw PreferencesError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        
+        //TODO: finish this off later
     }
 }

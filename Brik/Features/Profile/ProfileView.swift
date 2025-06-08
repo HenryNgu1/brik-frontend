@@ -45,14 +45,13 @@ struct ProfileView: View {
                                         .frame(width: 120, height: 120)
                                         .clipShape(Circle())
                                         .overlay(Circle().stroke(Color.gray, lineWidth: 2))
-                                        .accessibilityLabel("\(user.name)’s profile picture")
+                                        
                                 case .failure:
                                     // Fallback placeholder
                                     Image(systemName: "person.crop.circle.badge.exclamationmark")
                                         .resizable()
                                         .foregroundColor(.secondary)
                                         .frame(width: 120, height: 120)
-                                        .accessibilityLabel("Failed to load profile image")
                                 @unknown default:
                                     EmptyView()
                                 }

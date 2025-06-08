@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 struct PreferencesView: View, LocalizedError {
-    
+    @EnvironmentObject var session : SessionManager
     @StateObject var viewModel = PreferencesViewModel()
     @StateObject private var autocomplete = SuburbAutoCompleteService()
     
@@ -153,7 +153,7 @@ struct PreferencesView: View, LocalizedError {
                     Button(action: {
                         viewModel.validateFields()
                         Task {
-                            await viewModel.createPreferences()
+                            await viewModel.savePreferences()
                         }
                     }) {
                         Text("Save Preferences")

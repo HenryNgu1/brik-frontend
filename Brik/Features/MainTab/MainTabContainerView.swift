@@ -79,7 +79,7 @@ struct MainContainerView_Previews: PreviewProvider {
             location: "Melbourne, Australia",
             rating: "0",
             profileImage: nil,
-            createdAt: "tuesday"
+            createdAt: "2012-08-12"
         )
 
         return NavigationView {
