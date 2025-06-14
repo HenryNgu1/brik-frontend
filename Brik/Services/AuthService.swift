@@ -73,9 +73,9 @@ final class AuthService {
             (data, response) = try await URLSession.shared.data(for: request)
             
             //DEBUG: If you want to see the body of the response
-//            if let text = String(data: data, encoding: .utf8) {
-//                print(" Raw login response:\n", text)
-//            }
+            //            if let text = String(data: data, encoding: .utf8) {
+            //                print(" Raw login response:\n", text)
+            //            }
         }
         catch {
             throw AuthError.unknown(error)
@@ -125,32 +125,34 @@ final class AuthService {
         var request = URLRequest(url: url)
         request.httpMethod = "POST" // Set the request method to post
         
-        // 3. Prepare boundary for multi part request
-        let boundary = UUID().uuidString // Generates random string to seperate image from text fields in body
-        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-        // Header Example: Content-Type: multipart/form-data; boundary=E3A1D4F2-7B15-4C0D-8907-FB3C9A16B2E1
-        // Tells server look for boundary string to use as divider
+        // 3. Prepare multi part request
         
+        var form = MultipartBody()
         
-        // 4. Build multipart body
-        let bodyData = try createMultipartBody(
-            email: email,
-            password: password,
-            name: name,
-            age: age,
-            gender: gender,
-            bio: bio,
-            location: location,
-            profileImage: profileImage,
-            boundary: boundary
-        )
+        form.addField(name: "email", value: email)
+        form.addField(name: "password", value: password)
+        form.addField(name: "name", value: name)
+        form.addField(name: "age", value: String(age))
+        form.addField(name: "gender", value: gender)
+        form.addField(name: "bio", value: bio)
+        form.addField(name: "location", value: location)
+        
+        if let image = profileImage,
+           let jpegData = image.jpegData(compressionQuality: 0.7) {
+            form.addFile(name: "profileImage", fileName: "profileImage.jpg", mimeType: "image/jpeg", fileData: jpegData)
+        }
+        
+        let bodyData = form.close()
+        
+        // Set content type to header
+        request.setValue(form.contentType, forHTTPHeaderField: "Content-Type")
         
         // 4.1 Set the request body as the multipart body we built
         request.httpBody = bodyData
-
+        
         // 5. Perform the call
         let (data, response) : (Data, URLResponse) // Store the network call here: data is the body, response is header
-    
+        
         // 5.1 Execute the request call and wait for a response
         do {
             (data, response) = try await URLSession.shared.data(for: request)
@@ -185,77 +187,6 @@ final class AuthService {
         catch {
             // 6.2 If this fails throw appropriate error
             throw AuthError.decodingError
-        }
-    }
-    
-    // CREATE MULTI PART BODY
-    func createMultipartBody(
-        email: String,
-        password: String,
-        name: String,
-        age: Int,
-        gender: String,
-        bio: String,
-        location: String,
-        profileImage: UIImage?,
-        boundary: String
-    ) throws -> Data {
-        
-        // 1. We will store the body in this data object and build it
-        var body = Data();
-        
-        // Helper function
-        func appendText(name : String, value : String) {
-            body.appendString("--\(boundary)\r\n")
-            body.appendString("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n")
-            body.appendString("\(value)\r\n")
-            
-            // Example:
-            //
-            // --XYZ123\r\n                                         <- boundary
-            // Content-Disposition: form-data; name="name"\r\n      <- name
-            // \r\n
-            // value\r\n                                            <- value
-        }
-        
-        // 2. Append text fields to body
-        appendText(name: "email", value: email)
-        appendText(name: "password", value: password)
-        appendText(name: "name", value: name)
-        appendText(name: "age", value: String(age))
-        appendText(name: "gender", value: gender)
-        appendText(name: "bio", value: bio)
-        appendText(name: "location", value: location)
-        
-        // 2.1 Append image if provided / not nil
-        if let image = profileImage,
-           let imageData = image.jpegData(compressionQuality: 0.7){ // Converts the UI image into JPEG data, 70% quality
-            
-            let filename = "profileImage.jpg" // Name the server will see for uploaded image
-            let mimetype = "image/jpeg" // Tells server what type of file is being uploaded
-            
-            body.appendString("--\(boundary)\r\n") // Boundary marker to seperate text from image
-            body.appendString("Content-Disposition: form-data; name=\"profileImage\"; filename=\"\(filename)\"\r\n") // header
-            body.appendString("Content-Type: \(mimetype)\r\n\r\n") // Content type
-            body.append(imageData) // Append JPEG bytes
-            body.appendString("\r\n") // Append new new line
-        }
-        
-        // 3. We end the multi part body
-        body.appendString("--\(boundary)--\r\n")
-        return body
-    }
-}
-
-// EXTENSION: Adding a custom function to swifts Data class
-private extension Data {
-    
-    mutating func appendString(_ string: String) {
-        
-        // 1. Attempts to convert string to utf8 bytes
-        if let data = string.data(using: .utf8) {
-            // 2. Append those bytes to the body
-            append(data)
         }
     }
 }

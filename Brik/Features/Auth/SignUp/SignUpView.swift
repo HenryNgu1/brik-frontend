@@ -72,7 +72,7 @@ struct SignUpView: View {
                         // 4.1 Present the photo picker
                         showImagePicker = true
                         }
-                        .padding(.top, 30)
+                        .padding(.top, 26)
                         .sheet(isPresented: $showImagePicker) {
                             ImagePicker(selectedImage: $viewModel.profileImage)
                         }
@@ -171,9 +171,6 @@ struct SignUpView: View {
                             .padding() // Padding
                             .background(Color(.secondarySystemBackground)) // Color
                             .cornerRadius(8) // Rounded corners
-                            .onChange(of: viewModel.dateOfBirth) {
-                                print("New DOB:", viewModel.dateOfBirth, "→ age:", viewModel.age)
-                            }
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
                                     .stroke(viewModel.dateOfBirthErrorMessage == nil

@@ -11,7 +11,6 @@ import SwiftUI
 struct PreferencesView: View, LocalizedError {
     @EnvironmentObject var session : SessionManager
     @StateObject var viewModel = PreferencesViewModel()
-    @StateObject private var autocomplete = SuburbAutoCompleteService()
     
     // CONTENT VIEW
     var body: some View {
@@ -23,42 +22,40 @@ struct PreferencesView: View, LocalizedError {
             ScrollView(.vertical, showsIndicators: true) {
                 
                 VStack(spacing: 36) {
-                    //
+                    // LOGO + TEXT
                     Image("AppLogo")
                         .resizable()
                         .frame(width: 90, height: 90)
                         .padding(.top, 16)
                     
-                    //
-                    Text("Edit preferences to get better matches")
+                    Text("Personalize your matches.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                    
-                    TextField("Prefered Suburb", text: $viewModel.preferedLocation)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(8)
-//                        .onChange(of: viewModel.preferedLocation) {
-//                            autocomplete.update(query: viewModel.preferedLocation)
-//                        }
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(viewModel.preferedLocationError == nil
-                                        ? Color.gray.opacity(0.5)
-                                        : Color.red,
-                                        lineWidth: 1)
-                        )
-                    //
-                    if let error = viewModel.preferedLocationError {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundColor(.red)
-                    }
-                    
+                                        
                     VStack(alignment: .leading, spacing: 20){
+                        // 1. LOCATION FIELD
+                        TextField("Prefered Suburb", text: $viewModel.preferredLocation)
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(viewModel.preferedLocationError == nil
+                                            ? Color.gray.opacity(0.5)
+                                            : Color.red,
+                                            lineWidth: 1)
+                            )
+                        // 1.1 LOCATION ERROR MESSAGE
+                        if let error = viewModel.preferedLocationError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+
                         
                         HStack {
                             VStack(alignment: .leading) {
+                                // 2. MIN BUDGET FIELD
                                 Text("Min budget")
                                 TextField("0", text: $viewModel.minBudget)
                                     .keyboardType(.numberPad)
@@ -71,7 +68,7 @@ struct PreferencesView: View, LocalizedError {
                                                     : Color.red,
                                                     lineWidth: 1)
                                     )
-                                //
+                                // 2.1 MIN BUDGET ERROR MESSAGE
                                 if let error = viewModel.minbudgetError {
                                     Text(error)
                                         .font(.caption)
@@ -81,6 +78,7 @@ struct PreferencesView: View, LocalizedError {
                             }
                             
                             VStack(alignment: .leading) {
+                                // 2.3 MAX BUDGET FIELD
                                 Text("Max budget")
                                 TextField("0", text: $viewModel.maxBudget)
                                     .keyboardType(.numberPad)
@@ -93,7 +91,7 @@ struct PreferencesView: View, LocalizedError {
                                                     : Color.red,
                                                     lineWidth: 1)
                                     )
-                                //
+                                // 2.4 MAX BUDGET ERROR MESSAGE
                                 if let error = viewModel.maxbudgetError {
                                     Text(error)
                                         .font(.caption)
@@ -102,29 +100,33 @@ struct PreferencesView: View, LocalizedError {
                             }
                         }
                         
-                        // 3. Pets & Smoking Toggles
+                        // 3. PET ALLOWED FIELD
                         Toggle("Pets Allowed", isOn: $viewModel.petsAllowed)
-                        // Inline comment: Toggle binds directly to a Bool, toggles UI state.
+                        
+                        // 4. SMOKING ALLOWED FIELD
                         Toggle("Smoking Allowed", isOn: $viewModel.smokingAllowed)
                         
+                        // 4. MIN AGE FIELD
                         Stepper("Min Age: \(viewModel.minAge)", value: $viewModel.minAge, in: 18...100)
-                            
+                        
+                        // 4.1 MIN AGE ERROR MESSAGE
                         if let error = viewModel.minAgeError {
                             Text(error)
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
                         
-                        //
+                        // 5. MAX AGE FIELD
                         Stepper("Max Age: \(viewModel.maxAge)", value: $viewModel.maxAge, in: viewModel.minAge...100)
-                        
+    
+                        // 5.1 MAX AGE ERROR MESSAGE
                         if let error = viewModel.maxAgeError {
                             Text(error)
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
                         
-                        //
+                        // 6. CLEAN FIELD
                         Text("Cleanliness Level")
                         Picker("Cleanliness Level", selection: $viewModel.cleanlinessLevel) {
                             Text("Low").tag("Low")
@@ -133,7 +135,7 @@ struct PreferencesView: View, LocalizedError {
                         }
                         .pickerStyle(.segmented)
                         
-                        //
+                        // 7. LIFESTYLE FIELD
                         Text("Lifestyle")
                         Picker("Lifestyle", selection: $viewModel.lifeStyle) {
                             Text("Quite").tag("Quite")
@@ -143,34 +145,51 @@ struct PreferencesView: View, LocalizedError {
                         .pickerStyle(.segmented)
                         
                         
-                    } // group end
+                    } // Group end
                     
+                    // 8. NETWORK CALL ERROR MESSAGES
                     if let error = viewModel.errorMessage {
                         Text(error)
                             .font(.caption)
                             .foregroundColor(.red)
                     }
+                    // 9. SAVE BUTTON
                     Button(action: {
+                        // 9.1 VALIDATE REQUIRED FIELDS
                         viewModel.validateFields()
                         Task {
+                            // 9.2 CALL SAVE PREF -> CALLS PUT/POST REQUEST
                             await viewModel.savePreferences()
                         }
                     }) {
-                        Text("Save Preferences")
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
+                        // 9.3 IF NETWORK CALL IN PROGRESS SHOW LOADER
+                        if viewModel.isLoading {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        }
+                        // 9.4 IF NO NETWORK CALL ONGOING SHOW DEFAULT SAVE TEXT
+                        else {
+                            Text("Save Preferences")
+                                .padding()
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
                     }
                     .padding(.vertical, 26)
-                }.padding(.horizontal, 24)
+                    .disabled(viewModel.isLoading)
+                }
+                .padding(.horizontal, 24)
             }
+            // Fetch current user preferences when view loads
             .onAppear {
                 Task {
                     await viewModel.loadPreferences()
                 }
             }
         }
+        .navigationTitle("Edit Preferences")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 #Preview {

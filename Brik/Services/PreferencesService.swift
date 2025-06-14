@@ -76,14 +76,7 @@ final class PreferencesService {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw PreferencesError.invalidResponse(statusCode: -1)
         }
-        switch httpResponse.statusCode {
-            // 7.1 Successful status we break
-        case 200...299:
-            break
-        case 404:
-            // 7.2 404 means no records found
-            throw PreferencesError.notFound
-        default :
+        guard (200...299).contains(httpResponse.statusCode) else {
             throw PreferencesError.invalidResponse(statusCode: httpResponse.statusCode)
         }
     }
@@ -117,7 +110,14 @@ final class PreferencesService {
         }
         
         // 6. check If status is successful
-        guard (200...299).contains(httpResponse.statusCode) else {
+        switch httpResponse.statusCode {
+            // 7.1 Successful status we break
+        case 200...299:
+            break
+        case 404:
+            // 7.2 404 means no records found
+            throw PreferencesError.notFound
+        default :
             throw PreferencesError.invalidResponse(statusCode: httpResponse.statusCode)
         }
         
@@ -133,13 +133,37 @@ final class PreferencesService {
     
     // UPDATE PREFERENCE
     func updatePreferences(token: String, preferences: Preferences) async throws {
+        // 1. Construct the URL
         guard let url = baseURL else {
             throw PreferencesError.invalidURL
         }
         
+        // 2. Build the request
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         
-        //TODO: finish this off later
+        // 3. Imbed auth token and set application/json as header
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        // 4. Encode the preferences to make the body
+        do {
+            request.httpBody = try JSONEncoder().encode(preferences)
+        }
+        catch {
+            throw PreferencesError.unknown(error)
+        }
+        
+        // 5. Perform network call
+        let (_, response) = try await URLSession.shared.data(for: request)
+        
+        // 6. Check status of response
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw PreferencesError.invalidResponse(statusCode: -1)
+        }
+        
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw PreferencesError.invalidResponse(statusCode: httpResponse.statusCode)
+        }
     }
 }

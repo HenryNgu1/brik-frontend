@@ -11,20 +11,12 @@ struct ProfileView: View {
     // Pull in the shared SessionManager to access currentUser
     @EnvironmentObject private var session: SessionManager
 
-    // Date formatter for “member since”
-    private static let dateFormatter: DateFormatter = {
-        let df = DateFormatter()
-        df.dateStyle = .medium            // e.g. “Feb 13, 2023”
-        df.timeStyle = .none
-        return df
-    }()
-
     var body: some View {
         // Show placeholder if no user is signed in
         ZStack {
             Color("SplashBackground")
                 .ignoresSafeArea(edges: .all)
-            // 1. Check if is logged in and use that user to display info
+            // 0. Check if is logged in and use that user to display info
             if let user = session.currentUser {
                 
                 ScrollView {
@@ -81,8 +73,8 @@ struct ProfileView: View {
                             // 4. EDIT + PREF navigation buttons
                             HStack {
                                 NavigationLink {
-                                    //EditProfileView()
-                                        //.environmentObject(session)
+                                    EditProfileView()
+                                        .environmentObject(session)
                                 } label: {
                                     HStack {
                                         Image(systemName: "pencil")

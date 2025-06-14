@@ -19,3 +19,16 @@ struct User: Codable {
     let profileImage: String?
     let createdAt: String
 }
+
+struct UpdatedUserRequest: Codable {
+    let name: String
+    let age: Int
+    let gender: String
+    let bio: String
+    let location: String
+}
+struct UpdatedUserResponse: Codable {
+    let message: String
+    let user: User
+}
+

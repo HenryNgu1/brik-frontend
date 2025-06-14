@@ -9,7 +9,7 @@ import Foundation
 
 final class PreferencesViewModel : ObservableObject {
     // INPUTS
-    @Published var preferedLocation: String = ""
+    @Published var preferredLocation: String = ""
     @Published var minBudget : String = "0"
     @Published var maxBudget : String = "0"
     @Published var petsAllowed : Bool = false
@@ -49,12 +49,11 @@ final class PreferencesViewModel : ObservableObject {
     
     // VALIDATE FIELDS AND ASSIGN ERROR MSG
     func validateFields() {
-        if preferedLocation.isEmpty {
+        if preferredLocation.isEmpty {
             preferedLocationError = "Preffered Location is required"
         } else {
             preferedLocationError = nil
         }
-        
         if minAge > maxAge {
             minAgeError = "Must be lower than max age"
         } else {
@@ -105,7 +104,7 @@ final class PreferencesViewModel : ObservableObject {
         
         // 3. Get auth token
         guard let token = KeychainHelper.standard.retrieveToken() else {
-            errorMessage = "Please log in to create preferences"
+            errorMessage = "Failed to authenticate. Please log in again."
             return
         }
         
@@ -115,7 +114,7 @@ final class PreferencesViewModel : ObservableObject {
         
         // 4. Build req body
         let preferences = Preferences(
-            preferedLocation: preferedLocation,
+            preferredLocation: preferredLocation,
             minBudget: minB,
             maxBudget: maxB,
             petsAllowed: petsAllowed,
@@ -130,15 +129,14 @@ final class PreferencesViewModel : ObservableObject {
         do {
             if hasPreferences {
                 //5.1 POST request if user has not set preferences
-               // _ = try await PreferencesService.shared.Update()
-                return
+                _ = try await PreferencesService.shared.updatePreferences(token: token, preferences: preferences)
+                
             }
             else {
                 // 5.2 PUT / update request if user already has preferences
                 _ = try await PreferencesService.shared.createPreferences(preferences,token: token)
-               hasPreferences = true
+                hasPreferences = true
             }
-            
         }
         // 6. Catch errors
         catch let prefError as PreferencesError {
@@ -149,27 +147,29 @@ final class PreferencesViewModel : ObservableObject {
             errorMessage = "An error occurred: \(error.localizedDescription)"
             isLoading = false
         }
+        // 7. Stop loader
         isLoading = false
     }
     
-    // LOAD USER PREFERENCES
+    // FETCH USER PREFERENCES
     @MainActor
     func loadPreferences() async {
+        // 1. Attempt to retrieve token
         guard let token = KeychainHelper.standard.retrieveToken() else {
-            errorMessage = "Please log in to view preferences"
+            errorMessage = "No token found. Please log in to view preferences"
             return
         }
-        
+        // 2. Show loader and reset error message
         isLoading = true
         errorMessage = nil
         
-        // Try get preferences if they exist
+        // 3. Try get preferences if they exist
         do {
-            // 1. Fetch user preferences
+            // 3.1. Fetch user preferences
             let preferences = try await PreferencesService.shared.fetchPreferences(token: token)
             
-            // 2. Bound fetched preferences to UI
-            preferedLocation = preferences.preferedLocation
+            // 3.2. Bound fetched preferences to UI
+            preferredLocation = preferences.preferredLocation
             minBudget = String(preferences.minBudget)
             maxBudget = String(preferences.maxBudget)
             petsAllowed = preferences.petsAllowed
@@ -179,15 +179,24 @@ final class PreferencesViewModel : ObservableObject {
             cleanlinessLevel = preferences.cleanlinessLevel
             lifeStyle = preferences.lifestyle
             
-            // 3. Remember user has preferences set
+            // 33. Remember user has preferences, set true so PUT request is run in savePreferences()
             hasPreferences = true
         }
+        // 4. Catch errors
         catch let prefError as PreferencesError {
-            errorMessage = prefError.errorDescription
+            switch prefError {
+                // 4.1 If 404 / notFound. Do nothing, user hasnt set chosen pref
+            case .notFound:
+                errorMessage = " "
+            default :
+                // 4.2 Map to correct error
+                errorMessage = prefError.errorDescription
+            }
         }
         catch {
             errorMessage = "An error occurred: \(error.localizedDescription)"
         }
+        // 5. Stop the loader
         isLoading = false
     }
 }
