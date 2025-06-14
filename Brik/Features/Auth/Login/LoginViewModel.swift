@@ -71,9 +71,11 @@ final class LoginViewModel : ObservableObject {
         
         errorMessage = nil
         
+        let loginRequest = LoginRequest(email: email, password: password)
+        
         do {
             // 2. Await the network call and store the response
-            let response = try await AuthService.shared.login(email: email, password: password)
+            let response = try await AuthService.shared.login(loginRequest: loginRequest)
             
             //3. Store JWT in keychain and set current user
             session.signIn(user: response.user, token: response.token)

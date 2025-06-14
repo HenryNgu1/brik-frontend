@@ -46,11 +46,18 @@ struct MultipartBody {
         body.appendString("\r\n")
     }
     
-    // Finalize the body by appending the closing boundary.
+    // 3. Finalize the body by appending the closing boundary.
     func close() -> Data {
         var data = body
         data.appendString("--\(boundary)--\r\n")
         return data
+        
+    // Multipartbody Example:
+                //
+                // --XYZ123asdFDdSJSN\r\n                               <- boundary
+                // Content-Disposition: form-data; name="name"\r\n      <- name
+                // \r\n
+                // value\r\n                                            <- value
     }
 }
 

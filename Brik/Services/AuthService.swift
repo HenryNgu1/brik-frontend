@@ -43,7 +43,7 @@ final class AuthService {
     private init() {}
     
     // LOGIN
-    func login(email: String, password: String) async throws -> LoginResponse {
+    func login(loginRequest: LoginRequest) async throws -> LoginResponse {
         
         // 1. Build the endpoint, concat the baseurl, guard to ensure if it fails exits and throw error
         guard let url = URL(string: "/auth/login", relativeTo: baseURL) else {
@@ -59,7 +59,7 @@ final class AuthService {
         
         // 3. Create and set the body for the request. Convert the LoginRequest model into json format
         do {
-            request.httpBody = try JSONEncoder().encode(LoginRequest(email: email, password: password))
+            request.httpBody = try JSONEncoder().encode(loginRequest)
         }
         catch {
             throw AuthError.unknown(error)
@@ -105,15 +105,7 @@ final class AuthService {
     }
     
     // SIGNUP
-    func signup(
-        email: String,
-        password: String,
-        name: String,
-        age: Int,
-        gender: String,
-        bio: String,
-        location: String,
-        profileImage: UIImage? = nil) async throws -> SignUpResponse
+    func signup(signUpRequest: SignUpRequest, profileImage: UIImage? = nil) async throws -> SignUpResponse
     {
         
         // 1. Build the endpoint URL
@@ -126,17 +118,17 @@ final class AuthService {
         request.httpMethod = "POST" // Set the request method to post
         
         // 3. Prepare multi part request
-        
         var form = MultipartBody()
         
-        form.addField(name: "email", value: email)
-        form.addField(name: "password", value: password)
-        form.addField(name: "name", value: name)
-        form.addField(name: "age", value: String(age))
-        form.addField(name: "gender", value: gender)
-        form.addField(name: "bio", value: bio)
-        form.addField(name: "location", value: location)
+        form.addField(name: "email", value: signUpRequest.email)
+        form.addField(name: "password", value: signUpRequest.password)
+        form.addField(name: "name", value: signUpRequest.name)
+        form.addField(name: "age", value: String(signUpRequest.age))
+        form.addField(name: "gender", value: signUpRequest.gender)
+        form.addField(name: "bio", value: signUpRequest.bio)
+        form.addField(name: "location", value: signUpRequest.location)
         
+        // Add a file to body if it exists
         if let image = profileImage,
            let jpegData = image.jpegData(compressionQuality: 0.7) {
             form.addFile(name: "profileImage", fileName: "profileImage.jpg", mimeType: "image/jpeg", fileData: jpegData)

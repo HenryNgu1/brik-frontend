@@ -148,19 +148,20 @@ final class SignUpViewModel : ObservableObject {
         // 2. Show loader and reset error message
         isLoading = true
         errorMessage = nil
+        
+        let signUpRequest: SignUpRequest = SignUpRequest(
+            email: email,
+            password: password,
+            name: name,
+            age: age,
+            gender: gender,
+            bio: bio,
+            location: location
+        )
             
         do {
             // 3. Await the network call and get response back
-            let response = try await AuthService.shared.signup(
-                email: email,
-                password: password,
-                name: name,
-                age: age,
-                gender: gender,
-                bio: bio,
-                location: location,
-                profileImage: profileImage
-            )
+            let response = try await AuthService.shared.signup(signUpRequest: signUpRequest, profileImage: profileImage)
             
             // 4. Set user and save token in keychain
             session.signIn(user: response.user, token: response.token)
