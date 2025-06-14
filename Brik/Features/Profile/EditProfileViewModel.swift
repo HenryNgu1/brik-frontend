@@ -9,6 +9,7 @@ import Foundation
 import PhotosUI
 
 final class EditProfileViewModel : ObservableObject {
+    
     // 1. INPUTS
     @Published var name : String = ""
     @Published var dateOfBirth: Date = Date()
@@ -20,9 +21,11 @@ final class EditProfileViewModel : ObservableObject {
     
     // 2. UI STATE
     @Published var isLoading: Bool = false
+    
     // 3. ERROR MSGs
     @Published var dateOfBirthErrorMessage: String?
     @Published var errorMessage: String?
+    
     // 4. Set initial values in form from current user
     init () {
         if let user = SessionManager.shared.currentUser {
@@ -33,6 +36,7 @@ final class EditProfileViewModel : ObservableObject {
             profileImage = user.profileImage
         }
     }
+    
     // 5. Calculate date to age in int
     var age: Int {
         // Use extended Date years function in Shared/Extensions/DateToAge to get age from birthdate
@@ -49,11 +53,12 @@ final class EditProfileViewModel : ObservableObject {
         }
     }
     
+    // 7. Bool flag ensure no form errors exist before network call
     var canSubmit: Bool {
         dateOfBirthErrorMessage == nil
     }
     
-    // 7. Send and update profile to DB
+    // 8. UPDATE PROFILE IN DB AND LOCAL CURRENT USER
     @MainActor
     func save() async {
         // 1. Ensure no errors exist before continuing
@@ -83,8 +88,10 @@ final class EditProfileViewModel : ObservableObject {
         
         // 5. Try send request and receive response
         do {
+            // 5.1 Call user service updateuser method to perform network call
             let response = try await UserService.shared.updateUserProfile(updatedUser: updatedUser, profileImage: pickedImage, token: token)
             
+            // 5.2 Create updated user object and set it as current user
             let updatedUser = User(
                 id: response.user.id,
                 email: response.user.email,
@@ -99,6 +106,7 @@ final class EditProfileViewModel : ObservableObject {
             )
             SessionManager.shared.currentUser = updatedUser
         }
+        // 6. Catch errors
         catch let userServiceError as UserProfileError {
             errorMessage = userServiceError.errorDescription
         } catch let keychainError as KeychainError {
@@ -107,9 +115,8 @@ final class EditProfileViewModel : ObservableObject {
             errorMessage = "Failed to update profile: \(error.localizedDescription)"
         }
     
-        // 6. stop the loader
+        // 7. stop the loader
         isLoading = false
     }
-    
     
 }

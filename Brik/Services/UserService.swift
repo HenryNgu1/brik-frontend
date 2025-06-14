@@ -7,7 +7,7 @@
 
 import Foundation
 import UIKit
-
+// Mapping errors
 enum UserProfileError: Error, LocalizedError {
     case invalidUrl
     case missingAuthToken

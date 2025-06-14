@@ -22,34 +22,36 @@ struct ProfileView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         
-                        // 1. Profile Image
+                        // 1. PROFILE IMAGE
                         if let imageUrlString = user.profileImage,
                            let url = URL(string: imageUrlString) {
                             AsyncImage(url: url) { phase in
                                 switch phase {
                                 case .empty:
-                                    ProgressView()   // loading spinner while fetching
+                                    // If image is still loading show progress
+                                    ProgressView()
                                         .frame(width: 120, height: 120)
                                 case .success(let image):
+                                    // If image loads successfully show image
                                     image
                                         .resizable()
                                         .scaledToFill()
                                         .frame(width: 120, height: 120)
                                         .clipShape(Circle())
                                         .overlay(Circle().stroke(Color.gray, lineWidth: 2))
-                                        
                                 case .failure:
-                                    // Fallback placeholder
+                                    // If image fails to load
                                     Image(systemName: "person.crop.circle.badge.exclamationmark")
                                         .resizable()
                                         .foregroundColor(.secondary)
                                         .frame(width: 120, height: 120)
                                 @unknown default:
+                                    // In any other case show empty
                                     EmptyView()
                                 }
                             }
                         } else {
-                            // No URL → show generic placeholder
+                            // if no URL, show generic placeholder
                             Image(systemName: "person.crop.circle.fill")
                                 .resizable()
                                 .foregroundColor(.secondary)
@@ -57,21 +59,22 @@ struct ProfileView: View {
                                 .accessibilityLabel("Default profile picture")
                         }
 
-                        // 2. User Name & Email
+                        // 2. NAME TEXT
                         Text(user.name)
                             .font(.title)
                             .fontWeight(.semibold)
                             .accessibilityAddTraits(.isHeader)
+                        
+                        // 3. EMAIL TEXT
                         Text(user.email)
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .accessibilityLabel("Email: \(user.email)")
 
-                        // 3. Info
                         VStack(alignment: .leading, spacing: 8) {
                             
-                            // 4. EDIT + PREF navigation buttons
                             HStack {
+                                // 4. EDIT PROFILE NAV BUTTON
                                 NavigationLink {
                                     EditProfileView()
                                         .environmentObject(session)
@@ -88,6 +91,7 @@ struct ProfileView: View {
                                     .cornerRadius(8)
                                 }
                                 
+                                // 5. PREFERENCES NAV BUTTON
                                 NavigationLink {
                                     PreferencesView()
                                         .environmentObject(session)
@@ -106,6 +110,7 @@ struct ProfileView: View {
                                 
                             }
                             
+                            // 6. AGE TEXT
                             Text("Age")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
@@ -113,7 +118,8 @@ struct ProfileView: View {
                             Text("\(user.age)")
                                 .font(.body)
                                 .accessibilityLabel("Age, \(user.age)")
-                        
+                            
+                            // 7. GENDER TEXT
                             Text("Gender")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
@@ -121,7 +127,8 @@ struct ProfileView: View {
                             Text(user.gender)
                                 .font(.body)
                                 .accessibilityLabel("Gender, \(user.gender)")
-                        
+                            
+                            // 8. LOCATION TEXT
                             Text("Location")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
@@ -129,7 +136,8 @@ struct ProfileView: View {
                             Text(user.location)
                                 .font(.body)
                                 .accessibilityLabel("Location, \(user.location)")
-                        
+                            
+                            // 9. ABOUT TEXT
                             Text("About")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
@@ -155,18 +163,17 @@ struct ProfileView: View {
 //                            }
 //                            .padding(.top, 12)
                             
+                            // 10. MEMBER SINCE TEXT
                             Text("Member Since")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                                 .padding(.top, 12)
                             Text(user.createdAt)
-                                
-                            
-                                
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(12)
                         
+                        // 11. SIGN OUT BUTTON
                         Button {
                             session.signOut()
                         } label: {
@@ -175,12 +182,9 @@ struct ProfileView: View {
                                 .foregroundColor(.red)
                                 .padding(.vertical, 12)
                         }
-                        
                     }
                     .padding()
                 }
-                
-                // No user logged in
             } else {
                 // If no user is in session, prompt to log in
                 VStack(spacing: 16) {

@@ -84,7 +84,6 @@ struct EditProfileView: View {
                 }
                 .padding()
                 
-                // NAME, LOCATION, DOB, GENDER, BIO LAYOUT
                 VStack(alignment: .leading){
                     
                     // 2. NAME FIELD
@@ -211,10 +210,10 @@ struct EditProfileView: View {
                         // Show "Save Preferences" in button if not executing call
                         Text("Save Preferences")
                             .font(.headline) // Text font
-                            .foregroundColor(.white) //Text color
-                            .padding() // Auto padding
-                            .background(Color.blue) // Button color
-                            .cornerRadius(8) // Rounded button corners
+                            .foregroundColor(.white) // Text color
+                            .padding()
+                            .background(Color.blue)
+                            .cornerRadius(8)
                     }
                 }
                 .padding(.vertical, 32)
