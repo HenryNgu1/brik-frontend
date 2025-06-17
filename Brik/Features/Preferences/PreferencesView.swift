@@ -34,6 +34,8 @@ struct PreferencesView: View, LocalizedError {
                                         
                     VStack(alignment: .leading, spacing: 20){
                         // 1. LOCATION FIELD
+                        Text("Prefered Suburb")
+                            
                         TextField("Prefered Suburb", text: $viewModel.preferredLocation)
                             .padding()
                             .background(Color(.secondarySystemBackground))

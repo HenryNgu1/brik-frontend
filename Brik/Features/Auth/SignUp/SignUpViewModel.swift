@@ -149,6 +149,7 @@ final class SignUpViewModel : ObservableObject {
         isLoading = true
         errorMessage = nil
         
+        // Construct request body
         let signUpRequest: SignUpRequest = SignUpRequest(
             email: email,
             password: password,

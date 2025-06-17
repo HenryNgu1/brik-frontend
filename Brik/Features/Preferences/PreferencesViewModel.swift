@@ -90,6 +90,9 @@ final class PreferencesViewModel : ObservableObject {
     // SUBMIT PREFERENCES
     @MainActor
     func savePreferences() async {
+        isLoading = true
+        defer {isLoading = false}
+        
         // 1. Ensure inputs are valid
         guard canSubmit else {
             errorMessage = "Please correct the errors in the form"
@@ -109,7 +112,6 @@ final class PreferencesViewModel : ObservableObject {
         }
         
         // 3. Show loader and reset error message
-        isLoading = true
         errorMessage = nil
         
         // 4. Build req body
@@ -154,13 +156,14 @@ final class PreferencesViewModel : ObservableObject {
     // FETCH USER PREFERENCES
     @MainActor
     func loadPreferences() async {
+        isLoading = true
+        defer {isLoading = false} // Stop the when method exits
         // 1. Attempt to retrieve token
         guard let token = KeychainHelper.standard.retrieveToken() else {
             errorMessage = "No token found. Please log in to view preferences"
             return
         }
-        // 2. Show loader and reset error message
-        isLoading = true
+        // 2. Reset error message
         errorMessage = nil
         
         // 3. Try get preferences if they exist
@@ -179,7 +182,7 @@ final class PreferencesViewModel : ObservableObject {
             cleanlinessLevel = preferences.cleanlinessLevel
             lifeStyle = preferences.lifestyle
             
-            // 33. Remember user has preferences, set true so PUT request is run in savePreferences()
+            // 3.3. Remember user has preferences, set true so PUT request is run in savePreferences()
             hasPreferences = true
         }
         // 4. Catch errors
@@ -196,7 +199,5 @@ final class PreferencesViewModel : ObservableObject {
         catch {
             errorMessage = "An error occurred: \(error.localizedDescription)"
         }
-        // 5. Stop the loader
-        isLoading = false
     }
 }

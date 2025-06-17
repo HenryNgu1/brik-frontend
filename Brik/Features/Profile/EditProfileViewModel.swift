@@ -61,6 +61,9 @@ final class EditProfileViewModel : ObservableObject {
     // 8. UPDATE PROFILE IN DB AND LOCAL CURRENT USER
     @MainActor
     func save() async {
+        isLoading = true
+        defer {isLoading = false}
+        
         // 1. Ensure no errors exist before continuing
         guard canSubmit else  {
             errorMessage = "Please fill out all required fields"
@@ -73,8 +76,7 @@ final class EditProfileViewModel : ObservableObject {
             return
         }
         
-        // 3. Show loader and reset error msg
-        isLoading = true
+        // 3. Reset error msg
         errorMessage = nil
         
         // 4. Build request body
@@ -114,9 +116,5 @@ final class EditProfileViewModel : ObservableObject {
         } catch {
             errorMessage = "Failed to update profile: \(error.localizedDescription)"
         }
-    
-        // 7. stop the loader
-        isLoading = false
     }
-    
 }

@@ -20,21 +20,20 @@ enum PreferencesError : Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "Failed to construct preferences URL."
+            return "Invalid URL"
         case .missingAuthToken:
-            return "No authentication token found."
-        case .invalidResponse(let code):
-            return "Server returned status code \(code)."
-        case .serverError(let message):
+            return "Missing auth token"
+        case .invalidResponse(statusCode: let code):
+            return "Invalid response status code: \(code)"
+        case .serverError(message: let message):
             return message
-        case .decodingError:
-            return "Failed to decode server response."
+        case .decodingError(let error):
+            return "Failed to decode server response: \(error)"
         case .unknown(let err):
             return err.localizedDescription
         case .notFound:
             return "No preferences found."
         }
-        
     }
 }
 

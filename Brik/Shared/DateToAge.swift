@@ -7,7 +7,7 @@
 
 import Foundation
 
-// Extends Swift UI Date type
+// Extends Swift UI Date class
 extension Date {
     
     // Custom method to swift UI Date type

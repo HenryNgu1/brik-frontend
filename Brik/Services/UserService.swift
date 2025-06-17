@@ -40,16 +40,16 @@ final class UserService
     static let shared = UserService()
     
     // 2. endpoint URL
-    var baseUrl = URL(string : "http://localhost:3000/user/update")
+    var baseUrl = URL(string : "http://localhost:3000")
     
     // 3. Initialise instance
     private init(){}
     
-    // UPDATE / PUT REQUEST
+    // 1. UPDATE / PUT REQUEST
     func updateUserProfile(updatedUser: UpdatedUserRequest, profileImage: UIImage? = nil, token: String) async throws -> UpdatedUserResponse {
         
-        // 1. Construct URL
-        guard let url = baseUrl else {
+        // 1. Construct endpointpath
+        guard let url = URL(string: "/user/update", relativeTo: baseUrl) else {
             throw UserProfileError.invalidUrl
         }
         
@@ -81,7 +81,7 @@ final class UserService
         
         
         // 5. Network call
-        let (data, response) : (Data, URLResponse)
+        var (data, response) : (Data, URLResponse)
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         }

@@ -9,14 +9,13 @@ import Foundation
 
 // Marked as codable to be able to encode and decode for network calls
 struct Preferences : Codable {
-    var preferredLocation: String
-    var minBudget : Int
-    var maxBudget : Int
-    var petsAllowed : Bool
-    var smokingAllowed : Bool
-    var minAge : Int
-    var maxAge : Int
-    var cleanlinessLevel: String
-    var lifestyle: String
-    
+    let preferredLocation: String
+    let minBudget : Int
+    let maxBudget : Int
+    let petsAllowed : Bool
+    let smokingAllowed : Bool
+    let minAge : Int
+    let maxAge : Int
+    let cleanlinessLevel: String
+    let lifestyle: String
 }

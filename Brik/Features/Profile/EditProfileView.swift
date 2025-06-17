@@ -140,7 +140,9 @@ struct EditProfileView: View {
                         Text(error)
                             .font(.caption)
                             .foregroundColor(.red)
+                            .padding(.bottom, 10)
                     }
+                        
                     
                     // 5. GENDER FIELD
                     // 5.1 Edit text
