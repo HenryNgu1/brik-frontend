@@ -158,7 +158,7 @@ final class ListingsService {
     
     
     // 3. PUT REQUEST: UPDATE USER LISTING
-    func updateListing(token: String, listing: ListingsRequest, images: [UIImage]) async throws {
+    func updateListing(token: String, listing: ListingsRequest, updatedImages: [Int: UIImage]) async throws {
         
         // 1. Construct endpoint path
         guard let url = URL(string: "/user/listings", relativeTo: baseURL) else {
@@ -183,8 +183,8 @@ final class ListingsService {
         multipart.addField(name: "petsAllowed", value: String(listing.petsAllowed))
         
         // 4.2 Add image files to multipart
-        for (idex, image) in images.prefix(5).enumerated() {
-            let fieldName = "listingImage\(idex + 1)"
+        for (slot, image) in updatedImages{
+            let fieldName = "listingImage\(slot + 1)"
             let filename = "\(fieldName).jpg"
             let mimeType = "image/jpeg"
             if let data = image.jpegData(compressionQuality: 0.7) {
@@ -200,22 +200,18 @@ final class ListingsService {
         // 4.3 Finalize the mulitpart body
         request.httpBody = multipart.close()
         request.setValue(multipart.contentType, forHTTPHeaderField: "Content-Type")
-        if let body = request.httpBody,
-           let bodyString = String(data: body, encoding: .utf8) {
-            print("🔶 Request Body:\n\(bodyString)")
-        } else {
-            print("⚠️ No HTTP body to print or unable to decode as UTF-8")
-        }
 
         // 5. Make network call
         let (_, response) = try await URLSession.shared.data(for: request)
         
         // 6. Check status of call
         guard let httpResponse = response as? HTTPURLResponse else {
+            print("Invalid response")
             throw ListingsError.invalidResponse(statusCode: -1)
         }
         
         guard (200...299).contains(httpResponse.statusCode) else {
+            print("Error Status code: \(httpResponse.statusCode)")
             throw ListingsError.invalidResponse(statusCode: httpResponse.statusCode)
         }
     }

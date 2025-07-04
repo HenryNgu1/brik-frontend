@@ -5,65 +5,110 @@
 //  Created by Henry Nguyen on 15/6/2025.
 //
 
-/// Manages the form state for viewing/creating/editing/deleting a single Listing.
 import Foundation
-import SwiftUI
 import PhotosUI
 
 @MainActor
 final class EditListingViewModel: ObservableObject {
+    
     // TEXT FIELD BINDINGS
     @Published var description: String = ""
     @Published var location: String = ""
-    @Published var rentPriceWeekly: String = "" // String for TextField
+    @Published var rentPriceWeekly: Double = 0.0
     @Published var availabilityDate: Date = Date()
     @Published var petsAllowed: Bool = false
-    @Published var images: [UIImage] = [] // Loaded UIImages
     
     // PHOTO PICKER BINDINGS
-    @Published var showPicker: Bool = false
-    @Published var selectedItems: [PhotosPickerItem] = [] // For picker
+    @Published var existingImgURLs: [String] = []
+    @Published var replacedImages: [Int: UIImage] = [:]
 
     // ERROR MSGS
     @Published var isSaving = false
     @Published var errorMessage : String? = nil
 
+    // PRIVATE PROPERTIES
     private var existinglisting: Listing?
     
-    // 1. Initialize for existing listing
-    init(listing: Listing? = nil) {
-        
-        existinglisting = listing
-        
-        // Seed fields with existing listing
-        description = listing?.description ?? "" // If listing is non nil use left side else use right side value
-        location = listing?.location ?? ""
-        rentPriceWeekly = listing?.rentPriceWeekly ?? ""
-        if let dateStr = listing?.availabilityDate,
-           let date = ISO8601DateFormatter().date(from: dateStr) {
-            availabilityDate = date
-        }
-        petsAllowed = listing?.petsAllowed ?? false
+    // COMPUTED PROPERTIES
+    var isCreatingNewListing: Bool {
+        existinglisting == nil
     }
     
-    // Convert PhotoPicker into UIImage array
-    func loadImages() {
-        for item in selectedItems {
-            Task {
-                if let data = try? await item.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data) {
-                    images.append(image)
-                }
-            }
+    var screenTitle: String {
+        isCreatingNewListing ? "Create Listing" : "Edit Listing"
+    }
+    
+    var saveButtonTitle: String {
+        isCreatingNewListing ? "Create" : "Save"
+    }
+    
+    // INITIALISATION
+    init() {
+        self.existinglisting = nil
+        setUpNewListing()
+    }
+    
+    init(listing: Listing) {
+        self.existinglisting = listing
+        populateFields(from: listing)
+    }
+    
+    private func setUpNewListing() {
+        description = ""
+        location = ""
+        rentPriceWeekly = 0.0
+        availabilityDate = Date()
+        petsAllowed = false
+        existingImgURLs = []
+        replacedImages = [:]
+    }
+    
+    private func populateFields(from listing: Listing) {
+        description = listing.description
+        location = listing.location
+        rentPriceWeekly = Double(listing.rentPriceWeekly) ?? 0.00
+        petsAllowed = listing.petsAllowed
+        existingImgURLs = listing.imageUrls
+        replacedImages = [:]
+        
+        // convert string to date
+        if let date = ISO8601DateFormatter().date(from: listing.availabilityDate) {
+            availabilityDate = date
         }
+    }
+    
+    // VALIDATION
+     private func validateForm() -> Bool {
+        errorMessage = nil
+         
+         if description == "" {
+             errorMessage = "Description is required."
+             return false
+         }
+         
+         if location == "" {
+             errorMessage = "Location is required."
+             return false
+         }
+         
+         if rentPriceWeekly < 0 {
+            errorMessage = "Rent price must be non-negative."
+            return false
+         }
+         
+         return true
     }
     
     func saveListing() async {
+        guard validateForm() else {
+            return
+        }
+                
         isSaving = true
         defer {isSaving = false}
         
         guard let token = KeychainHelper.standard.retrieveToken() else {
-            errorMessage = "Could not retrieve token"
+            errorMessage = "Could not authenticate. Please try logging in again."
             return
         }
         
@@ -72,18 +117,23 @@ final class EditListingViewModel: ObservableObject {
         let listing = ListingsRequest(
             description: description,
             location: location,
-            rentPriceWeekly: Double(rentPriceWeekly) ?? 0,
+            rentPriceWeekly: rentPriceWeekly,
             availabilityDate: ISO8601DateFormatter().string(from: availabilityDate),
             petsAllowed: petsAllowed)
         
         do {
-            if existinglisting == nil {
-                // CREATE NEW LISTING
-                _ = try await ListingsService.shared.createListing(token: token, listing: listing , images: images)
+            // CREATE A NEW LISTING
+            if isCreatingNewListing {
+                let newImages = Array(replacedImages.values)
+                
+                _ = try await ListingsService.shared.createListing(token: token, listing: listing, images: newImages)
+                print("new listing created")
             }
             else {
                 // UPDATE EXISTING LISTING
-                _ = try await ListingsService.shared.updateListing(token: token, listing: listing, images: images)
+                _ = try await ListingsService.shared.updateListing(token: token, listing: listing, updatedImages: replacedImages)
+                
+                print ("listing updated")
             }
         }
         catch {

@@ -168,7 +168,7 @@ struct ProfileView: View {
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                                 .padding(.top, 12)
-                            Text(user.createdAt)
+                            Text(user.createdAt.formattedDateFromISO())
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(12)
@@ -220,7 +220,7 @@ struct ProfileView_Previews: PreviewProvider {
             location: "Melbourne, Australia",
             rating: "0",
             profileImage: nil,
-            createdAt: "tuesday"
+            createdAt: "2025-07-04T10:18:22.000Z"
         )
 
         return NavigationView {

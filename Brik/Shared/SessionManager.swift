@@ -20,7 +20,7 @@ final class SessionManager : ObservableObject {
         else {
             self.isLoggedIn = false
         }
-    }
+    }    
     
     func signIn(user: User, token: String) {
         try? KeychainHelper.standard.SaveToken(token)

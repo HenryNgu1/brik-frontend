@@ -16,6 +16,7 @@ final class ListingsViewModel : ObservableObject {
     @Published var errorMessage : String? = nil
     @Published var showDeleteConfirmation = false
     
+    // On initialisation fetch the listing and assign it to currentlisting
     init() {
         Task {
             await fetchListing()

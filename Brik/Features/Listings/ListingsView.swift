@@ -4,14 +4,16 @@
 //
 //  Created by Henry Nguyen on 17/6/2025.
 //
-
-import SwiftUI
-
 import SwiftUI
 
 struct ListingsView: View {
-    @StateObject private var viewModel = ListingsViewModel()
     @State private var navigateToEdit = false
+    
+    @StateObject private var viewModel: ListingsViewModel
+
+    init(viewModel: ListingsViewModel = ListingsViewModel()) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     var body: some View {
         Group {
@@ -32,6 +34,8 @@ struct ListingsView: View {
                         HStack {
                             NavigationLink {
                                 EditListingView(listing: listing)
+                                    .environmentObject(viewModel)
+                                
                             } label: {
                                 Image(systemName: "pencil")
                                 Text("Edit Listing")
@@ -46,23 +50,38 @@ struct ListingsView: View {
                         .padding(.horizontal)
                         
                         Spacer()
-                        ScrollView(.horizontal,) {
+                        ScrollView(.horizontal) {
                             HStack {
                                 ForEach(listing.imageUrls, id: \.self) { urlStr in
                                     if let url = URL(string: urlStr) {
-                                        AsyncImage(url: url) { image in
-                                            image.resizable().scaledToFill()
-                                        } placeholder: {
-                                            Color.gray.opacity(0.3)
+                                        AsyncImage(url: url) { phase in
+                                            switch phase {
+                                            case .empty:
+                                                ProgressView()
+                                                    .frame(width: 120, height: 120)
+                                            case .success(let image):
+                                                image
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 120, height: 120)
+                                                    .clipped()
+                                                    .cornerRadius(8)
+                                            case .failure:
+                                                Color.red.opacity(0.3)
+                                                    .frame(width: 120, height: 120)
+                                                    .cornerRadius(8)
+                                            @unknown default:
+                                                Color.black
+                                                    .frame(width: 120, height: 120)
+                                                    .cornerRadius(8)
+                                            }
                                         }
-                                        .frame(width: 120, height: 120)
-                                        .clipped()
-                                        .cornerRadius(8)
                                     }
                                 }
                             }
                         }
                         .padding(.horizontal)
+
                         
                         
                         // Fields
@@ -84,14 +103,18 @@ struct ListingsView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .padding(.top, 10)
-                            Text("$\(String(format: "%.2f", listing.rentPriceWeekly))")
-                                .font(.body)
+                            let cleaned = listing.rentPriceWeekly.replacingOccurrences(of: ",", with: "")
+                            let value = Double(cleaned) ?? 0.0
+                            Text("$\(String(format: "%.2f", value))")
+
                             
                             Text("Available from")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .padding(.top, 10)
-                            Text(listing.availabilityDate)
+                            
+
+                            Text(listing.availabilityDate.formattedDateFromISO())
                                 .font(.body)
                             
                             Toggle("Pets Allowed", isOn: .constant(listing.petsAllowed))
@@ -99,7 +122,13 @@ struct ListingsView: View {
                                 .padding(.top, 10)
                         }
                         .padding()
-
+                        
+                        if let error = viewModel.errorMessage {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                        
                         
                         Button("Delete") {
                             viewModel.showDeleteConfirmation = true
@@ -131,3 +160,40 @@ struct ListingsView: View {
     }
 }
 
+#if DEBUG
+struct ListingsViewWrapper: View {
+    @StateObject private var mockVM: ListingsViewModel
+
+    init() {
+        let mock = ListingsViewModel()
+        mock.currentListing = Listing(
+            id: 1,
+            userId: 1,
+            description: "Preview listing",
+            location: "Melbourne, VIC",
+            rentPriceWeekly: "39000",
+            availabilityDate: "2025-07-04T10:18:22.000Z",
+            petsAllowed: false,
+            imageUrls: [
+                "https://via.placeholder.com/120",
+                "https://via.placeholder.com/120"
+            ],
+            createdAt: "2025-07-04T10:18:22.000Z"
+        )
+        _mockVM = StateObject(wrappedValue: mock)
+    }
+
+    var body: some View {
+        NavigationStack {
+            ListingsView(viewModel: mockVM)
+        }
+    }
+}
+
+
+struct ListingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        ListingsViewWrapper()
+    }
+}
+#endif
